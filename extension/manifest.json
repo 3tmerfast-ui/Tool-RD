@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Flow Image Bridge",
-  "version": "6.0.1",
-  "description": "Bridges the Remix AI Studio React app to Google Labs Flow for on-device Nano Banana / Imagen image generation. No CDP, no Python.",
+  "name": "Tool-RD Flow Bridge",
+  "version": "1.0.0",
+  "description": "Cầu nối th-version-1.0-tool (Tool-RD) với Google Labs Flow để tạo ảnh Nano Banana / Imagen miễn phí trên trình duyệt. Thay cho Gemini API.",
 
   "permissions": [
     "tabs",
@@ -45,7 +45,6 @@
         "http://127.0.0.1:3001/*",
         "http://127.0.0.1:3002/*",
         "http://127.0.0.1:3003/*",
-        "https://app.3tify.com/*",
         "https://tool-rd.vercel.app/*"
       ],
       "js": ["content_app_bridge.js"],
@@ -67,8 +66,6 @@
       "http://127.0.0.1:3003/*",
       "http://127.0.0.1:5173/*",
       "http://127.0.0.1:8765/*",
-      "http://13.213.95.99/*",
-      "https://app.3tify.com/*",
       "https://tool-rd.vercel.app/*"
     ]
   },
