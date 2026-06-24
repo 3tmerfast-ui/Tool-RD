@@ -49,39 +49,44 @@ export const generateProductRedesigns = async (
   const guide = getDesignGuide(productType);
   const guideNote = guide ? `ETSY DESIGN GUIDE: ${guide}` : "";
   const keepNote = selectedComponents && selectedComponents.length
-    ? `MUST KEEP these elements (do not remove): ${selectedComponents.join(", ")}.`
+    ? `Keep these ELEMENT TYPES but REDRAW them originally (different shapes/arrangement): ${selectedComponents.join(", ")}.`
     : "";
 
-  // 6 biến thể TINH TẾ, CÙNG bố cục & phong cách — chỉ đổi màu/chi tiết, không vẽ lại sản phẩm khác.
+  // 6 biến thể — mỗi cái ĐỔI bố cục + font + cách diễn đạt chữ để KHÔNG trùng đối thủ (tránh bị report).
   const VARIATIONS = [
-    "Faithful premium enhancement: keep the exact same composition and style, just refine quality, sharpen details and richen colors. Closest to the original.",
-    "Warm palette variation: same layout, shift to a warmer harmonious color story (ambers, roses, golds) while keeping every element.",
-    "Cool jewel-tone variation: same layout, deep jewel tones (sapphire, emerald, amethyst) with luminous backlit glow.",
-    "Ornate variation: same layout, add tasteful extra fine detailing and a more decorative refined border.",
-    "Soft pastel elegant variation: same layout, lighter airy pastel palette with delicate linework, premium boutique feel.",
-    "Bold focal variation: same layout, stronger contrast and one clear focal highlight, crisp clean leaded lines.",
+    "Layout A: rearrange the main motif into a fresh original composition; elegant serif typography for any text; original decorative border.",
+    "Layout B: shift the focal balance and element placement; flowing script typography; warm harmonious palette (ambers, roses, golds).",
+    "Layout C: a more symmetrical centered arrangement different from the source; clean modern sans-serif typography; cool jewel tones (sapphire, emerald, amethyst).",
+    "Layout D: asymmetric / off-center artistic composition; refined hand-lettered style typography; richer ornate detailing.",
+    "Layout E: airy minimalist arrangement with more negative space; delicate light typography; soft pastel palette.",
+    "Layout F: bold dramatic composition with a strong focal point; condensed elegant typography; high-contrast vivid colors.",
   ];
 
-  const buildPrompt = (variation: string) => `HIGH-END ETSY ${productType.toUpperCase()} DESIGN — premium, salable, professional quality for the US Etsy market.
-  CONCEPT (keep faithfully): ${basePrompt}.
-  GOAL: Keep the SAME composition, subject, layout and overall style as the reference — this is a refined VARIATION of the same product, NOT a different design and NOT a plain copy. Elevate craftsmanship and polish to top-seller Etsy quality.
-  STYLE LOCK: clean symmetrical layout, crisp stained-glass / hand-painted linework, balanced floral/decor arrangement, vibrant but harmonious colors, gallery-grade finish.
+  const buildPrompt = (variation: string) => `HIGH-END ETSY ${productType.toUpperCase()} — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing.
+  CONCEPT & PURPOSE (keep the niche/theme/gift intent): ${basePrompt}.
+  ⚠️ ORIGINALITY (CRITICAL — must avoid copyright/report on Etsy):
+  - Do NOT reproduce any source's EXACT wording, font, or element-by-element layout.
+  - If there is a quote/saying, REPHRASE it into FRESH original wording with the same sentiment (different sentence). Do NOT copy the quote verbatim.
+  - Use a DIFFERENT typography/font style than typical listings.
+  - Rework the COMPOSITION, arrangement and color distribution so the result is clearly DISTINCT from competitors while serving the same gift purpose.
+  - Keep ONLY personalization placeholders (name/year) as plain editable text.
+  STYLE: crisp ${productType} craftsmanship, vibrant harmonious colors, balanced gallery-grade finish.
   ${variation}
   ${keepNote}
-  ADJUSTMENTS (user): ${userNotes || "none — just elevate quality"}.
+  ADJUSTMENTS (user): ${userNotes || "none — just make it original & premium"}.
   ${materialNote}
   ${guideNote}
-  OUTPUT: single centered product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
+  OUTPUT: single centered original product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
   const results: string[] = [];
   for (let i = 0; i < NUM_REDESIGNS; i++) {
     if (i > 0) await sleep(2000);
     try {
-      // GIỮ reference ở MỌI mẫu để khoá đúng phong cách/bố cục (gu Etsy).
+      // KHÔNG truyền reference image -> tránh AI copy y nguyên chữ/font/bố cục của đối thủ.
+      // Chủ đề được giữ qua coreTheme + redesignPrompt (text). referenceImage chỉ dùng cho cleanup.
       const img = await generateFlowImage({
         prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
         aspectRatio: "1:1",
-        referenceImage,
       });
       results.push(img);
     } catch (e) {

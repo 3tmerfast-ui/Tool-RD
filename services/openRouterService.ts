@@ -52,7 +52,7 @@ export const analyzeProductDesign = async (
     "STEP 2 — UNDERSTAND THE MATERIAL: Identify the physical MATERIAL & construction from the image (e.g. translucent stained glass, clear acrylic, opaque glazed ceramic, matte wood, layered wood). Pick the closest product type from this exact list:\n" +
     `[${PRODUCT_TYPES.filter(t => t !== PRODUCT_TYPES[0]).join(" | ")}]\n` +
     (productType && productType !== PRODUCT_TYPES[0] ? `(The user selected "${productType}" — prefer it unless the image clearly shows a different material.)\n` : "") +
-    "STEP 3 — REDESIGN: ONLY after understanding the design AND material, write a redesign prompt that PRESERVES the exact core theme & subject AND renders it in the CORRECT material (right transparency/finish/edges/light behavior), elevated to top-seller Etsy quality (a refined variation — NOT a copy, NOT a different concept).\n" +
+    "STEP 3 — REDESIGN (ORIGINAL, not a copy): Keep the same niche/theme/gift-purpose and the correct MATERIAL realism, but the redesign MUST be an ORIGINAL design to avoid copyright/report risk on Etsy. Therefore: REPHRASE any quote/saying into fresh original wording (same sentiment, different sentence — never copy verbatim), suggest a DIFFERENT typography/font, and REWORK the composition/arrangement & color distribution so it is clearly distinct from the source. Keep only personalization placeholders (name/date). Elevate to top-seller Etsy quality.\n" +
     (material ? `MATERIAL & SPECS (selected type): ${material}\n` : "") +
     (guide ? `DESIGN GUIDE (selected type): ${guide}\n` : "") +
     `MARKET PRINCIPLES: ${ETSY_DESIGN_PRINCIPLES}\n` +
@@ -63,8 +63,8 @@ export const analyzeProductDesign = async (
     '"detectedMaterial" (1 sentence: the physical material/construction + how light/finish behaves), ' +
     '"description" (1-2 sentences expanding on the depiction), ' +
     '"detectedComponents" (string[]: 3-7 concrete elements that define this design and must be preserved), ' +
-    '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme AND material), ' +
-    '"redesignPrompt" (ONE rich English image-gen prompt that MUST begin by restating the coreTheme/subject, render it in the detected MATERIAL with correct realism, keep the same composition & subject, and end with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
+    '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme AND material; explicitly state how to make it ORIGINAL: new wording for any quote, a different font, reworked layout), ' +
+    '"redesignPrompt" (ONE rich English image-gen prompt that restates the coreTheme/subject, renders it in the detected MATERIAL with correct realism, but produces an ORIGINAL design: paraphrase any quote into NEW wording, use a DIFFERENT font, and REWORK the composition so it is clearly distinct from the source — keep only name/date placeholders. End with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
 
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",

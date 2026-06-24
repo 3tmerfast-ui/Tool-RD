@@ -43,28 +43,26 @@ export const generateProductRedesigns = async (
   originalImage?: string,
   _retention: RetentionLevel = "40%"
 ): Promise<string[]> => {
-  const refNote = originalImage
-    ? "Use the reference image only as loose THEME inspiration. Do NOT copy it — produce a clearly different, upgraded design."
-    : "";
   const VARIATIONS = [
-    "VARIATION A: richer detail and refined premium linework, the most polished take.",
-    "VARIATION B: rework the COMPOSITION and add tasteful new accents while keeping the same theme.",
-    "VARIATION C: a cleaner modern minimalist take — bolder shapes, more negative space, sophisticated palette.",
+    "Layout A: original composition, elegant serif typography, refined premium linework.",
+    "Layout B: reworked focal balance & placement, flowing script typography, warm palette.",
+    "Layout C: clean modern minimalist arrangement, bold sans-serif typography, sophisticated palette.",
   ];
   const buildPrompt = (variation: string) =>
-    `PROFESSIONAL T-SHIRT REDESIGN — create a NEW, MORE BEAUTIFUL version (NOT a copy). ` +
-    `SAME CONCEPT: ${baseAiPrompt}. Keep the theme & subject but genuinely REDESIGN — change composition, colors and details so it looks clearly upgraded and distinct. ` +
-    `${variation} ${refNote} NOTES: ${userAddition}. ` +
+    `PROFESSIONAL T-SHIRT DESIGN — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. ` +
+    `CONCEPT & PURPOSE (keep niche/theme): ${baseAiPrompt}. ` +
+    "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date placeholders. " +
+    `${variation} NOTES: ${userAddition}. ` +
     "Clean vector-style print, centered layout, transparent/pure white background, 8k high-fidelity.";
 
   const results: string[] = [];
   for (let i = 0; i < 3; i++) {
     if (i > 0) await sleep(1500);
     try {
+      // KHÔNG truyền reference -> tránh copy y nguyên chữ/font/bố cục.
       const img = await generateFlowImage({
         prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
         aspectRatio: "1:1",
-        referenceImage: i === 0 ? originalImage : undefined,
       });
       results.push(img);
     } catch (e) {
