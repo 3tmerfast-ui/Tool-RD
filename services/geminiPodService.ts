@@ -39,31 +39,39 @@ export const generateProductRedesigns = async (
   productType: string,
   referenceImage?: string
 ): Promise<string[]> => {
-  const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Add hanging rope style: ${ropeType}.` : "Zero ropes, zero hangers.";
+  const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Hanging hardware style: ${ropeType}.` : "";
   const material = PRODUCT_MATERIALS[productType] || "";
   const materialNote = material ? `MATERIAL REALISM (${productType}): ${material}` : "";
   const refNote = referenceImage
-    ? "Use the REFERENCE IMAGE as the ground-truth subject: keep the same characters, objects, composition and color identity; only restore/enhance quality. Do NOT invent a different scene."
+    ? "Use the REFERENCE IMAGE only as loose THEME inspiration (same subject & mood). Do NOT copy it — produce a clearly different, upgraded design."
     : "";
-  const finalPrompt = `ETSY BOUTIQUE DESIGN ENGINE - PROTOCOL "PREMIUM PILLAR":
-  CORE CONCEPT: ${basePrompt}.
-  ADJUSTMENTS: ${userNotes || "Enhance while strictly maintaining original layout and hand-drawn spirit"}.
-  ${refNote}
 
-  STRICT REQUIREMENTS:
-  - SUBJECT FIDELITY: Preserve the exact subject, characters and layout from the reference. No new/extra objects.
-  - PILLAR LAYOUT LOCK: Keep the exact vertical/horizontal arrangement.
-  - ${materialNote}
-  - TEXTURE: Realistic hand-crafted textures appropriate to the material above.
-  - FINISH: 8k high-fidelity. NO white die-cut border. Clean professional product design.
-  - BACKGROUND: 100% PURE WHITE (#FFFFFF).
-  - ${ropeNote}`;
+  // 3 hướng sáng tạo KHÁC NHAU để ra 3 mẫu phân biệt, không trùng lặp.
+  const VARIATIONS = [
+    "VARIATION A: richer, more luminous color palette with deeper landscape detail and elegant refined linework; the most premium boutique feel.",
+    "VARIATION B: rework the COMPOSITION (different moon orientation / subject pose angle / element placement) and add tasteful extra celestial accents (stars, glow, sparkles) while keeping the same theme.",
+    "VARIATION C: a cleaner, more modern minimalist take — bolder silhouette, more negative space and sophisticated color harmony.",
+  ];
+
+  const buildPrompt = (variation: string) => `PROFESSIONAL ETSY BOUTIQUE REDESIGN — create a NEW, MORE BEAUTIFUL version (NOT a copy).
+  SAME CONCEPT & SUBJECT: ${basePrompt}.
+  REDESIGN GOAL: Keep the recognizable subject, theme and mood, but genuinely REDESIGN it — improve and CHANGE composition, color harmony, lighting and decorative details so the result looks clearly upgraded and distinct from the original. It must NOT look identical to the source.
+  ${variation}
+  ${refNote}
+  ADJUSTMENTS: ${userNotes || "elevate to high-end boutique quality"}.
+  ${materialNote}
+  REQUIREMENTS: 8k high-fidelity, professional commercial design, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
   const results: string[] = [];
   for (let i = 0; i < 3; i++) {
     if (i > 0) await sleep(2000);
     try {
-      const img = await generateFlowImage({ prompt: finalPrompt, aspectRatio: "1:1", referenceImage });
+      // referenceImage chỉ truyền cho mẫu đầu (giữ nét chủ đề); 2 mẫu sau bỏ ref để biến tấu mạnh hơn.
+      const img = await generateFlowImage({
+        prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
+        aspectRatio: "1:1",
+        referenceImage: i === 0 ? referenceImage : undefined,
+      });
       results.push(img);
     } catch (e) {
       if (results.length === 0 && i === 2) throw e;

@@ -43,15 +43,29 @@ export const generateProductRedesigns = async (
   originalImage?: string,
   _retention: RetentionLevel = "40%"
 ): Promise<string[]> => {
-  const finalPrompt =
-    `ETSY T-SHIRT DESIGN PROTOCOL. CORE: ${baseAiPrompt}. NOTES: ${userAddition}. ` +
+  const refNote = originalImage
+    ? "Use the reference image only as loose THEME inspiration. Do NOT copy it — produce a clearly different, upgraded design."
+    : "";
+  const VARIATIONS = [
+    "VARIATION A: richer detail and refined premium linework, the most polished take.",
+    "VARIATION B: rework the COMPOSITION and add tasteful new accents while keeping the same theme.",
+    "VARIATION C: a cleaner modern minimalist take — bolder shapes, more negative space, sophisticated palette.",
+  ];
+  const buildPrompt = (variation: string) =>
+    `PROFESSIONAL T-SHIRT REDESIGN — create a NEW, MORE BEAUTIFUL version (NOT a copy). ` +
+    `SAME CONCEPT: ${baseAiPrompt}. Keep the theme & subject but genuinely REDESIGN — change composition, colors and details so it looks clearly upgraded and distinct. ` +
+    `${variation} ${refNote} NOTES: ${userAddition}. ` +
     "Clean vector-style print, centered layout, transparent/pure white background, 8k high-fidelity.";
 
   const results: string[] = [];
   for (let i = 0; i < 3; i++) {
     if (i > 0) await sleep(1500);
     try {
-      const img = await generateFlowImage({ prompt: finalPrompt, aspectRatio: "1:1", referenceImage: originalImage });
+      const img = await generateFlowImage({
+        prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
+        aspectRatio: "1:1",
+        referenceImage: i === 0 ? originalImage : undefined,
+      });
       results.push(img);
     } catch (e) {
       if (results.length === 0 && i === 2) throw e; // không tạo được ảnh nào -> báo lỗi
