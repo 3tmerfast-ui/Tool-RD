@@ -121,6 +121,11 @@ function App() {
   };
 
   const startWorkflow = async (image: string) => {
+    // Reset MỌI kết quả cũ để không hiển thị thiết kế của sản phẩm trước.
+    setRedesigns(null);
+    setCurrentDesignId(null);
+    setExtractedElements(null);
+    setSelectedRedesignIndex(null);
     try {
       if (activeTab === AppTab.POD) {
         setStage(ProcessStage.CLEANING);
@@ -180,6 +185,7 @@ function App() {
     if (!analysis || !originalImage) return;
     try {
       setStage(ProcessStage.GENERATING);
+      setRedesigns(null);
       const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, "T-Shirt", false, AppTab.TSHIRT, originalImage, retention);
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
@@ -199,6 +205,7 @@ function App() {
     if (!analysis) return;
     try {
       setStage(ProcessStage.GENERATING);
+      setRedesigns(null);
       const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, productType, processedImage || originalImage || undefined);
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
