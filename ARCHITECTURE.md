@@ -11,7 +11,8 @@ thiết kế và ảnh.
 |-----|-----------|
 | UI | React 19, TypeScript, Vite 6 |
 | Icon | lucide-react |
-| AI | `@google/genai` (Gemini 2.5 Flash Image, Gemini 3 Flash Preview) |
+| Tạo ảnh | Chrome extension điều khiển Google Labs Flow (Nano Banana / Imagen) |
+| Phân tích ảnh | OpenRouter (vision, `openai/gpt-4o-mini`) |
 | Backend | Google Apps Script (`doPost`) |
 | Lưu trữ | Google Sheets (data) + Google Drive (ảnh) |
 | Auth/State | localStorage (phiên đăng nhập, system key) |
@@ -59,9 +60,12 @@ thiết kế và ảnh.
 │   ├── ApiKeyModal.tsx           # Nhập/lưu API key
 │   └── ErrorBoundary.tsx         # Bắt lỗi React
 ├── services/                     # Tầng truy cập dịch vụ ngoài
-│   ├── geminiService.ts          # Luồng AI cho T-shirt (clean/analyze/generate)
-│   ├── geminiPodService.ts       # Luồng AI cho POD/Ornament + tách nhân vật
+│   ├── geminiService.ts          # Luồng T-shirt (uỷ quyền extension + OpenRouter)
+│   ├── geminiPodService.ts       # Luồng POD/Ornament (uỷ quyền extension + OpenRouter)
+│   ├── flowExtensionService.ts   # Client tạo ảnh qua Chrome extension (Nano Banana)
+│   ├── openRouterService.ts      # Phân tích ảnh vision->JSON qua OpenRouter
 │   └── googleSheetService.ts     # RPC tới Apps Script (auth, lịch sử, ảnh)
+├── extension/                    # Chrome extension MV3 "Flow Image Bridge"
 └── *.txt                         # Mã backend Google Apps Script (xem mục 6)
 ```
 
@@ -75,14 +79,38 @@ thiết kế và ảnh.
 - Tải lịch sử từ cloud (`getDesignsFromSheet`); admin xem được toàn bộ.
 - Chọn service theo tab: `geminiService` (T-shirt) hoặc `geminiPodService` (POD).
 
-### Service AI (`geminiService.ts`, `geminiPodService.ts`)
-- `getAiClient()`: gộp key từ `localStorage('app_system_key')` và `process.env.API_KEY`,
-  tách theo `,;\n`, **chọn ngẫu nhiên 1 key** để cân tải/né quota.
-- `executeWithRetry()`: retry kèm exponential backoff + jitter khi gặp 429/quota.
-- Hàm chính: `cleanupProductImage`, `analyzeProductDesign` (trả JSON theo schema),
-  `generateProductRedesigns` (sinh 3 ảnh 1:1), `extractDesignElements`,
-  `detectAndSplitCharacters` (POD), `validateToken`.
-- Model: `gemini-2.5-flash-image` (ảnh), `gemini-3-flash-preview` (phân tích).
+### Service AI (`geminiService.ts`, `geminiPodService.ts`) — ĐÃ THAY GEMINI
+> Gemini API đã được gỡ. Hai file này vẫn giữ tên + chữ ký hàm cũ (để `App.tsx`
+> không phải sửa) nhưng nay **uỷ quyền** sang 2 backend mới:
+
+- **Tạo / sửa ảnh → Flow extension** (`flowExtensionService.ts`): tạo ảnh
+  *Nano Banana / Imagen* MIỄN PHÍ qua Chrome extension điều khiển Google Labs Flow.
+  Áp dụng cho `cleanupProductImage`, `generateProductRedesigns`,
+  `extractDesignElements`, `remixProductImage`. `validateToken` = ping extension.
+- **Phân tích ảnh → OpenRouter** (`openRouterService.ts`): `analyzeProductDesign`
+  gọi OpenRouter Chat Completions (model vision `openai/gpt-4o-mini`) trả JSON
+  (description / designCritique / detectedComponents / redesignPrompt).
+- `detectAndSplitCharacters` (POD) hiện trả mảng rỗng (chưa dùng).
+
+### `flowExtensionService.ts` (client của extension)
+- Tự phát hiện **extension ID** qua beacon `__flowExtBeacon` mà content script
+  bơm lên trang; cache vào `localStorage('flow_ext_id')`.
+- `generateFlowImage({prompt, aspectRatio, referenceImage, model})` → gửi
+  `chrome.runtime.sendMessage(extId, {type:'flow-generate', ...})`, chờ ảnh dataURL.
+  Mở keep-alive port giữ MV3 service worker sống; timeout 180s.
+- `isFlowExtensionAvailable()`, `diagnoseExtensionUnavailable()`, `pingFlowExtension()`.
+
+### Extension `extension/` (Flow Image Bridge, MV3 v6.0.1)
+- `content_app_bridge.js`: phát beacon ID lên origin app (đã khai trong
+  `externally_connectable.matches` + `content_scripts`: localhost:3000 dev và
+  `https://tool-rd.vercel.app`).
+- `content_main.js` / `content_isolated.js`: lấy reCAPTCHA Enterprise token +
+  proxy fetch trên origin labs.google (qua WAF).
+- `background.js`: lái Flow tạo ảnh; API ngoài: `ping`, `flow-init-pool`,
+  `flow-pool-status`, `flow-generate`.
+- **Yêu cầu vận hành**: mở app bằng Chrome đã Load unpacked `extension/` và đăng
+  nhập `labs.google`. Người dùng không cài extension sẽ không tạo được ảnh →
+  đây là tool nội bộ.
 
 ### Service backend (`googleSheetService.ts`)
 - Gọi `GOOGLE_SCRIPT_URL` bằng `fetch` POST `text/plain` (né CORS preflight).
@@ -127,13 +155,24 @@ Khoá API **không** được hard-code trong mã. Tạo file `.env.local` (đã
 bỏ qua) dựa trên `.env.example`:
 
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+# Phân tích ảnh (vision -> JSON). CẢNH BÁO: VITE_ => nhúng vào bundle frontend.
+VITE_OPENROUTER_API_KEY=sk-or-v1-...
+# (tuỳ chọn) ép extension ID nếu beacon không tự phát hiện:
+# VITE_FLOW_EXTENSION_ID=
 ```
 
-- `vite.config.ts` inject biến này vào `process.env.API_KEY` / `process.env.GEMINI_API_KEY`.
-- Có thể nhập thêm key lúc chạy qua `ApiKeyModal` (lưu `localStorage('app_system_key')`).
+- `GEMINI_API_KEY` **không còn dùng** (đã thay bằng Flow extension + OpenRouter).
+- Tạo ảnh không cần API key — chỉ cần cài extension + đăng nhập labs.google.
 - `GOOGLE_SCRIPT_URL` cấu hình trong `services/googleSheetService.ts`.
-- Token GitHub / credential cá nhân **không** commit vào repo.
+- Token GitHub / Supabase / credential cá nhân **không** commit vào repo.
+
+### Cài đặt Local Flow extension
+1. Mở `chrome://extensions` → bật **Developer mode**.
+2. **Load unpacked** → chọn thư mục `extension/` trong repo.
+3. Mở 1 tab `https://labs.google/fx/tools/flow` và đăng nhập Google.
+4. Mở app (dev `localhost:3000` hoặc `tool-rd.vercel.app`) — beacon tự nối extension.
+   Nếu deploy domain khác, thêm domain đó vào `extension/manifest.json`
+   (`content_scripts.matches` + `externally_connectable.matches`) rồi reload extension.
 
 ## 8. Chạy cục bộ
 

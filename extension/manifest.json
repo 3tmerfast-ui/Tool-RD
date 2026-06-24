@@ -1,0 +1,89 @@
+{
+  "manifest_version": 3,
+  "name": "Flow Image Bridge",
+  "version": "6.0.1",
+  "description": "Bridges the Remix AI Studio React app to Google Labs Flow for on-device Nano Banana / Imagen image generation. No CDP, no Python.",
+
+  "permissions": [
+    "tabs",
+    "scripting",
+    "cookies",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://labs.google/*",
+    "https://aisandbox-pa.googleapis.com/*",
+    "https://*.googleusercontent.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://labs.google/*"],
+      "js": ["content_isolated.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://labs.google/*"],
+      "js": ["content_main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3002/*",
+        "http://localhost:3003/*",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:3000/*",
+        "http://127.0.0.1:3001/*",
+        "http://127.0.0.1:3002/*",
+        "http://127.0.0.1:3003/*",
+        "https://app.3tify.com/*",
+        "https://tool-rd.vercel.app/*"
+      ],
+      "js": ["content_app_bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "http://localhost:3001/*",
+      "http://localhost:3002/*",
+      "http://localhost:3003/*",
+      "http://localhost:5173/*",
+      "http://localhost:8765/*",
+      "http://127.0.0.1:3000/*",
+      "http://127.0.0.1:3001/*",
+      "http://127.0.0.1:3002/*",
+      "http://127.0.0.1:3003/*",
+      "http://127.0.0.1:5173/*",
+      "http://127.0.0.1:8765/*",
+      "http://13.213.95.99/*",
+      "https://app.3tify.com/*",
+      "https://tool-rd.vercel.app/*"
+    ]
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
