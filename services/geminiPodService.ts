@@ -117,12 +117,12 @@ const buildMockupPrompt = (productType: string, material: string, scene: string)
   Use the REFERENCE IMAGE as the printed artwork — keep it IDENTICAL, do not redraw or alter the design.
   Material: ${material}
   Scene: the finished product professionally ${scene}; realistic hanging cord/chain and metal loop.
-  Style: premium lifestyle e-commerce photography, sharp focus on the product, magazine quality, vertical 4:5 framing.`;
+  Style: premium lifestyle e-commerce photography, sharp focus on the product, magazine quality, SQUARE 1:1 framing, product centered.`;
 
 /** Tạo 1 mockup (giữ tương thích cũ). */
 export const generateProductMockup = async (designImage: string, productType: string): Promise<string> => {
   const material = PRODUCT_MATERIALS[productType] || "";
-  return generateFlowImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "3:4", referenceImage: designImage });
+  return generateFlowImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "1:1", referenceImage: designImage });
 };
 
 /** Tạo NHIỀU mockup (mặc định 6 bối cảnh khác nhau), stream từng ảnh qua onPartial. */
@@ -139,7 +139,7 @@ export const generateProductMockups = async (
     try {
       const img = await generateFlowImage({
         prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[i % MOCKUP_SCENES.length]),
-        aspectRatio: "3:4",
+        aspectRatio: "1:1",
         referenceImage: designImage,
       });
       results.push(img);

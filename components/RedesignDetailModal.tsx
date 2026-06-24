@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
+import { X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown, ZoomIn } from 'lucide-react';
 import { saveMockupToSheet, getMockupsFromSheet, saveFinalMockupResult, getImageBase64 } from '../services/googleSheetService';
 import { cleanupProductImage } from '../services/geminiPodService';
 import { COLOR_OPTIONS, ROPE_OPTIONS, RopeType } from '../types';
@@ -76,7 +76,10 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   const [aiMockups, setAiMockups] = useState<string[]>([]);
   const [showMockups, setShowMockups] = useState(false);
   const [isMockuping, setIsMockuping] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const MOCKUP_COUNT = 6;
+  const lightboxPrev = () => setLightboxIndex((p) => (p === null ? null : (p - 1 + aiMockups.length) % aiMockups.length));
+  const lightboxNext = () => setLightboxIndex((p) => (p === null ? null : (p + 1) % aiMockups.length));
   const handleAiMockup = async () => {
     setIsMockuping(true);
     setAiMockups([]);
@@ -541,15 +544,18 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                                 {Array(MOCKUP_COUNT).fill(0).map((_, i) => {
                                     const m = aiMockups[i];
                                     if (m) return (
-                                        <div key={i} className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 animate-fade-in">
-                                            <img src={m} alt={`Mockup ${i + 1}`} className="w-full h-full object-cover aspect-[3/4]" />
-                                            <a href={m} download={`mockup-${i + 1}.png`} className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 bg-indigo-600/90 text-white rounded-lg text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-indigo-500">
+                                        <div key={i} onClick={() => setLightboxIndex(i)} className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 animate-fade-in cursor-zoom-in aspect-square">
+                                            <img src={m} alt={`Mockup ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                                <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                            </div>
+                                            <a href={m} download={`mockup-${i + 1}.png`} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 bg-indigo-600/90 text-white rounded-lg text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-indigo-500">
                                                 <Download size={12} /> Tải
                                             </a>
                                         </div>
                                     );
                                     if (isMockuping) return (
-                                        <div key={i} className="aspect-[3/4] rounded-xl bg-slate-900 border border-slate-800 animate-pulse flex items-center justify-center">
+                                        <div key={i} className="aspect-square rounded-xl bg-slate-900 border border-slate-800 animate-pulse flex items-center justify-center">
                                             <ImageIcon className="text-slate-700 w-8 h-8" />
                                         </div>
                                     );
@@ -557,6 +563,22 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                                 })}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Lightbox phóng to mockup + nút chuyển qua lại */}
+                {lightboxIndex !== null && aiMockups[lightboxIndex] && (
+                    <div className="fixed inset-0 z-[70] bg-black/95 flex flex-col items-center justify-center p-6 animate-fade-in" onClick={() => setLightboxIndex(null)}>
+                        <button onClick={() => setLightboxIndex(null)} className="absolute top-5 right-6 text-slate-300 hover:text-white p-2"><X size={28} /></button>
+                        <span className="absolute top-6 left-6 text-slate-300 text-sm font-bold">{lightboxIndex + 1} / {aiMockups.length}</span>
+
+                        <button onClick={(e) => { e.stopPropagation(); lightboxPrev(); }} className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-indigo-600 text-white p-3 rounded-full transition-colors"><ChevronLeft size={28} /></button>
+                        <img src={aiMockups[lightboxIndex]} alt="Mockup" className="max-h-[82vh] max-w-[80vw] object-contain rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+                        <button onClick={(e) => { e.stopPropagation(); lightboxNext(); }} className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-indigo-600 text-white p-3 rounded-full transition-colors"><ChevronRight size={28} /></button>
+
+                        <a href={aiMockups[lightboxIndex]} download={`mockup-${lightboxIndex + 1}.png`} onClick={(e) => e.stopPropagation()} className="mt-5 flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-500">
+                            <Download size={18} /> Tải hình này
+                        </a>
                     </div>
                 )}
             </div>
