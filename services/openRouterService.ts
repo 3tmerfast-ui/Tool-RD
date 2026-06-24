@@ -11,7 +11,7 @@ import { ProductAnalysis, DesignMode, AppTab, RetentionLevel, PRODUCT_MATERIALS,
 import { ETSY_DESIGN_PRINCIPLES, getDesignGuide } from "./productKnowledge";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_MODEL = "openai/gpt-4o-mini"; // vision-capable, rẻ
+const OPENROUTER_MODEL = "google/gemini-2.0-flash-001"; // vision, rẻ, token ảnh không bị nhân 33x
 const getKey = () => ((import.meta as any).env?.VITE_OPENROUTER_API_KEY as string | undefined) || "";
 
 export const cleanJsonString = (text: string) => {
