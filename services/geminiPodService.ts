@@ -10,9 +10,21 @@
 
 import { ProductAnalysis, DesignMode, RopeType, AppTab, PRODUCT_MATERIALS } from "../types";
 import { generateFlowImage } from "./flowExtensionService";
+import { generateMindeskImage, isMindeskConfigured } from "./mindeskService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
 import { cutoutBackground } from "./imageUtils";
 import { getDesignGuide } from "./productKnowledge";
+
+/** Sinh ảnh qua MindeskAPI (on-prem) hoặc Flow extension tuỳ cấu hình. */
+const generateImage = (opts: {
+  prompt: string;
+  aspectRatio?: string;
+  referenceImage?: string;
+  model?: string;
+}): Promise<string> =>
+  isMindeskConfigured()
+    ? generateMindeskImage(opts)
+    : generateFlowImage(opts);
 
 export const cleanJsonString = _cleanJson;
 
@@ -84,7 +96,7 @@ export const generateProductRedesigns = async (
     if (i > 0) await sleep(2000);
     try {
       // GIỮ reference image làm STYLE ANCHOR -> bám đúng đường nét/phong cách vẽ; nội dung đổi qua prompt.
-      const img = await generateFlowImage({
+      const img = await generateImage({
         prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
         aspectRatio: "1:1",
         referenceImage,
@@ -122,7 +134,7 @@ const buildMockupPrompt = (productType: string, material: string, scene: string)
 /** Tạo 1 mockup (giữ tương thích cũ). */
 export const generateProductMockup = async (designImage: string, productType: string): Promise<string> => {
   const material = PRODUCT_MATERIALS[productType] || "";
-  return generateFlowImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "1:1", referenceImage: designImage });
+  return generateImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "1:1", referenceImage: designImage });
 };
 
 /** Tạo NHIỀU mockup (mặc định 6 bối cảnh khác nhau), stream từng ảnh qua onPartial. */
@@ -137,7 +149,7 @@ export const generateProductMockups = async (
   for (let i = 0; i < count; i++) {
     if (i > 0) await sleep(2000);
     try {
-      const img = await generateFlowImage({
+      const img = await generateImage({
         prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[i % MOCKUP_SCENES.length]),
         aspectRatio: "1:1",
         referenceImage: designImage,
@@ -153,7 +165,7 @@ export const generateProductMockups = async (
 
 export const extractDesignElements = async (imageBase64: string): Promise<string[]> => {
   try {
-    const img = await generateFlowImage({
+    const img = await generateImage({
       prompt: "Isolate main subject on pure white. Maintain colors and organic handcrafted textures.",
       aspectRatio: "1:1",
       referenceImage: imageBase64,
@@ -166,7 +178,7 @@ export const extractDesignElements = async (imageBase64: string): Promise<string
 
 export const remixProductImage = async (imageBase64: string, instruction: string): Promise<string> => {
   try {
-    return await generateFlowImage({
+    return await generateImage({
       prompt: `Modify: ${instruction}. Keep original PILLAR layout, hand-painted textures and colors. Pure white background.`,
       aspectRatio: "1:1",
       referenceImage: imageBase64,
