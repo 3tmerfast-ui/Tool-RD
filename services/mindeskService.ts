@@ -1,26 +1,115 @@
 /**
- * MindeskAPI bridge — tạo ảnh on-prem thay thế Chrome extension.
+ * Mindesk image generation via Book's BE queue (app.3tify.com).
  *
- * Khi VITE_MINDESK_URL được cấu hình, Tool-RD gọi trực tiếp đến server
- * MindeskAPI (FastAPI + Python) để sinh ảnh qua Google Labs Flow với
- * tài khoản Google quản lý sẵn — không cần cài Chrome extension.
+ * Flow: (optional) upload base64 ref → S3 URL
+ *   → POST /api/mindesk-jobs (Supabase JWT auth) → session_id + job_ids
+ *   → poll GET /api/mindesk-jobs/session/{id} every 2s
+ *   → return result_url (public S3 URL) when done.
  *
- * Endpoint: POST {VITE_MINDESK_URL}/api/generate-image
- * Response: { success, image_b64, image_url, duration_ms }
+ * Config (in .env.local):
+ *   VITE_BOOK_BE_URL=https://app.3tify.com
+ *   VITE_BOOK_AUTH_TOKEN=<10-year Supabase JWT>
  */
 
-const MINDESK_URL = ((import.meta as any).env?.VITE_MINDESK_URL as string | undefined ?? '')
-  .trim()
-  .replace(/\/$/, '');
+const BE_URL = ((import.meta as any).env?.VITE_BOOK_BE_URL as string | undefined ?? '')
+  .trim().replace(/\/$/, '');
+const AUTH_TOKEN = ((import.meta as any).env?.VITE_BOOK_AUTH_TOKEN as string | undefined ?? '').trim();
 
-/** True khi VITE_MINDESK_URL đã được cấu hình trong .env.local */
+const PROJECT_ID = 'tool-rd-pod-project';
+const POLL_INTERVAL_MS = 2_000;
+const POLL_TIMEOUT_MS  = 600_000; // 10 min
+
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
 export function isMindeskConfigured(): boolean {
-  return !!MINDESK_URL;
+  return !!(BE_URL && AUTH_TOKEN);
 }
 
+// ─── Internal helpers ─────────────────────────────────────────────────────────
+
+function authHeaders(): Record<string, string> {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AUTH_TOKEN}` };
+}
+
+/** Upload a base64 data URL to S3 via Book's storage API. Returns a public S3 URL. */
+async function uploadBase64ToS3(dataUrl: string): Promise<string> {
+  const res = await fetch(`${BE_URL}/api/storage/upload`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ project_id: PROJECT_ID, kind: 'pod-ref', base64: dataUrl }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`/api/storage/upload HTTP ${res.status}: ${detail.slice(0, 200)}`);
+  }
+  const data = await res.json() as { url: string };
+  if (!data.url) throw new Error('storage/upload: no url in response');
+  return data.url;
+}
+
+interface SubmitOut { session_id: string; job_ids: string[]; queued: number }
+
+async function submitJob(opts: {
+  sessionId: string;
+  prompt: string;
+  refImageUrl: string | null;
+  aspectRatio: string;
+}): Promise<SubmitOut> {
+  const res = await fetch(`${BE_URL}/api/mindesk-jobs`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      session_id:   opts.sessionId,
+      project_id:   PROJECT_ID,
+      prompts:      [opts.prompt],
+      ref_image_url: opts.refImageUrl,
+      aspect_ratio: opts.aspectRatio,
+      model_tier:   'NARWHAL',
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`/api/mindesk-jobs HTTP ${res.status}: ${detail.slice(0, 200)}`);
+  }
+  return res.json() as Promise<SubmitOut>;
+}
+
+interface JobStatus { job_id: string; status: string; result_url?: string | null; error_msg?: string | null }
+interface SessionStatus { session_id: string; total: number; pending: number; processing: number; done: number; failed: number; jobs: JobStatus[] }
+
+async function pollSession(sessionId: string): Promise<string> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await sleep(POLL_INTERVAL_MS);
+
+    let st: SessionStatus;
+    try {
+      const res = await fetch(`${BE_URL}/api/mindesk-jobs/session/${sessionId}`, {
+        cache: 'no-store',
+        headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` },
+      });
+      if (!res.ok) continue;
+      st = await res.json() as SessionStatus;
+    } catch {
+      continue;
+    }
+
+    const job = st.jobs[0];
+    if (!job) continue;
+
+    if (job.status === 'done' && job.result_url) return job.result_url;
+    if (job.status === 'failed') throw new Error(`Mindesk job failed: ${job.error_msg ?? 'unknown'}`);
+  }
+
+  throw new Error(`Mindesk: timeout sau ${POLL_TIMEOUT_MS / 1000}s chờ ảnh`);
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 /**
- * Tạo ảnh qua MindeskAPI — cùng chữ ký với generateFlowImage().
- * @returns data URL: "data:image/jpeg;base64,..."
+ * Generate an image via Book's BE queue. Returns a public S3 URL.
+ * Compatible with <img src> and usable as referenceImage for subsequent calls.
  */
 export async function generateMindeskImage(opts: {
   prompt: string;
@@ -28,51 +117,32 @@ export async function generateMindeskImage(opts: {
   referenceImage?: string;
   tier?: string;
 }): Promise<string> {
-  if (!MINDESK_URL) {
-    throw new Error('VITE_MINDESK_URL chưa được cấu hình — thêm vào .env.local');
-  }
+  if (!BE_URL || !AUTH_TOKEN) throw new Error('VITE_BOOK_BE_URL / VITE_BOOK_AUTH_TOKEN chưa được cấu hình trong .env.local');
 
-  const body: Record<string, unknown> = {
-    prompt: opts.prompt,
-    aspect_ratio: opts.aspectRatio ?? '1:1',
-    tier: opts.tier ?? 'NARWHAL',
-  };
+  // 1. Resolve reference image → S3 URL if it's base64
+  let refImageUrl: string | null = null;
   if (opts.referenceImage) {
-    body.reference_image_b64 = opts.referenceImage;
+    const ref = opts.referenceImage;
+    if (ref.startsWith('data:')) {
+      try {
+        refImageUrl = await uploadBase64ToS3(ref);
+      } catch (e) {
+        console.warn('[Mindesk] ref upload failed — generating without reference:', e);
+      }
+    } else if (ref.startsWith('http')) {
+      refImageUrl = ref;
+    }
   }
 
-  const res = await fetch(`${MINDESK_URL}/api/generate-image`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+  // 2. Submit job
+  const sessionId = crypto.randomUUID();
+  await submitJob({
+    sessionId,
+    prompt: opts.prompt,
+    refImageUrl,
+    aspectRatio: opts.aspectRatio ?? '1:1',
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    let detail = errText;
-    try {
-      const parsed = JSON.parse(errText) as { detail?: string };
-      if (parsed.detail) detail = parsed.detail;
-    } catch { /* raw text is fine */ }
-    throw new Error(`MindeskAPI ${res.status}: ${detail.slice(0, 300)}`);
-  }
-
-  const data = await res.json() as {
-    success: boolean;
-    image_b64?: string;
-    image_url?: string;
-    duration_ms?: number;
-    error?: string;
-  };
-
-  if (!data.success) {
-    throw new Error(data.error ?? 'MindeskAPI trả về success=false');
-  }
-  if (!data.image_b64) {
-    throw new Error('MindeskAPI không trả về image_b64');
-  }
-
-  return data.image_b64.startsWith('data:')
-    ? data.image_b64
-    : `data:image/jpeg;base64,${data.image_b64}`;
+  // 3. Poll until done
+  return pollSession(sessionId);
 }
