@@ -55,39 +55,39 @@ export const generateProductRedesigns = async (
 
   // 6 biến thể — mỗi cái ĐỔI bố cục + font + cách diễn đạt chữ để KHÔNG trùng đối thủ (tránh bị report).
   const VARIATIONS = [
-    "Layout A: rearrange the main motif into a fresh original composition; elegant serif typography for any text; original decorative border.",
-    "Layout B: shift the focal balance and element placement; flowing script typography; warm harmonious palette (ambers, roses, golds).",
-    "Layout C: a more symmetrical centered arrangement different from the source; clean modern sans-serif typography; cool jewel tones (sapphire, emerald, amethyst).",
-    "Layout D: asymmetric / off-center artistic composition; refined hand-lettered style typography; richer ornate detailing.",
-    "Layout E: airy minimalist arrangement with more negative space; delicate light typography; soft pastel palette.",
-    "Layout F: bold dramatic composition with a strong focal point; condensed elegant typography; high-contrast vivid colors.",
+    "Rearrange the bouquet/elements into a fresh composition; vary the specific flowers slightly. SAME art style & palette.",
+    "Different floral arrangement and a slightly varied border motif. KEEP identical line-work & rendering.",
+    "Alternate composition with a different focal flower; subtly shift emphasis within the SAME palette family.",
+    "Mirror/rebalance the layout; swap a couple of flower types. SAME delicacy & leading thickness.",
+    "Fuller, more abundant arrangement of the same-style flowers; SAME palette and technique.",
+    "Slightly airier/minimal arrangement; SAME exact rendering style, leading and color mood.",
   ];
 
-  const buildPrompt = (variation: string) => `HIGH-END ETSY ${productType.toUpperCase()} — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing.
-  CONCEPT & PURPOSE (keep the niche/theme/gift intent): ${basePrompt}.
-  ⚠️ ORIGINALITY (CRITICAL — must avoid copyright/report on Etsy):
-  - Do NOT reproduce any source's EXACT wording, font, or element-by-element layout.
-  - If there is a quote/saying, REPHRASE it into FRESH original wording with the same sentiment (different sentence). Do NOT copy the quote verbatim.
-  - Use a DIFFERENT typography/font style than typical listings.
-  - Rework the COMPOSITION, arrangement and color distribution so the result is clearly DISTINCT from competitors while serving the same gift purpose.
-  - Keep ONLY personalization placeholders (name/year) as plain editable text.
-  STYLE: crisp ${productType} craftsmanship, vibrant harmonious colors, balanced gallery-grade finish.
+  const buildPrompt = (variation: string) => `HIGH-END ETSY ${productType.toUpperCase()} — a refined ORIGINAL VARIATION in the SAME art style as the reference.
+  CONCEPT (keep): ${basePrompt}.
+  STYLE LOCK (match the REFERENCE image EXACTLY — top priority):
+  - Keep the SAME art style, rendering technique, line-work & leading thickness, level of delicacy, and SAME color palette/mood as the reference.
+  - Do NOT switch to a different art style (e.g. do NOT turn a soft pastel watercolor stained-glass into a bold heavy-leaded Tiffany style).
+  CONTENT CHANGE (moderate, to stay original & avoid copyright/report on Etsy):
+  - Rearrange the composition and vary the specific flowers/elements.
+  - REPHRASE any quote into FRESH wording (never verbatim) and use a DIFFERENT font.
+  - Keep ONLY personalization placeholders (name/year).
   ${variation}
   ${keepNote}
-  ADJUSTMENTS (user): ${userNotes || "none — just make it original & premium"}.
+  ADJUSTMENTS (user): ${userNotes || "none — keep the original style, just refine"}.
   ${materialNote}
   ${guideNote}
-  OUTPUT: single centered original product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
+  OUTPUT: single centered product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
   const results: string[] = [];
   for (let i = 0; i < NUM_REDESIGNS; i++) {
     if (i > 0) await sleep(2000);
     try {
-      // KHÔNG truyền reference image -> tránh AI copy y nguyên chữ/font/bố cục của đối thủ.
-      // Chủ đề được giữ qua coreTheme + redesignPrompt (text). referenceImage chỉ dùng cho cleanup.
+      // GIỮ reference image làm STYLE ANCHOR -> bám đúng đường nét/phong cách vẽ; nội dung đổi qua prompt.
       const img = await generateFlowImage({
         prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
         aspectRatio: "1:1",
+        referenceImage,
       });
       results.push(img);
       onPartial?.([...results]); // hiện ngay mẫu vừa xong
