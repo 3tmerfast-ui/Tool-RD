@@ -1,11 +1,35 @@
-import React, { useCallback } from 'react';
-import { Upload, Image as ImageIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Upload, ClipboardPaste } from 'lucide-react';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
+  const [pasted, setPasted] = useState(false);
+
+  // Nghe Ctrl/⌘+V toàn trang: dán ảnh từ clipboard ở bất kỳ đâu.
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            onFileSelect(file);
+            setPasted(true);
+            setTimeout(() => setPasted(false), 1500);
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [onFileSelect]);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -50,9 +74,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
           <Upload size={32} />
         </div>
         <h3 className="text-lg font-semibold text-slate-200 group-hover:text-white transition-colors">Upload Product Image</h3>
-        <p className="text-sm text-slate-500 mt-2">Drag & drop or click to browse</p>
-        <p className="text-xs text-slate-600 mt-1">JPG, PNG supported</p>
+        <p className="text-sm text-slate-500 mt-2">Kéo thả, bấm để chọn, hoặc dán ảnh (Ctrl/⌘+V)</p>
+        <p className="text-xs text-slate-600 mt-1 flex items-center gap-1">
+          <ClipboardPaste size={12} /> JPG, PNG · hỗ trợ copy-paste
+        </p>
       </label>
+      {pasted && (
+        <p className="text-xs text-emerald-400 mt-2 animate-fade-in">✓ Đã dán ảnh từ clipboard</p>
+      )}
     </div>
   );
 };
