@@ -12,7 +12,7 @@ thiết kế và ảnh.
 | UI | React 19, TypeScript, Vite 6 |
 | Icon | lucide-react |
 | Tạo ảnh | Chrome extension điều khiển Google Labs Flow (Nano Banana / Imagen) |
-| Phân tích ảnh | OpenRouter (vision, `google/gemini-2.0-flash-001`) |
+| Phân tích ảnh | OpenRouter (vision, `google/gemini-2.5-flash`) |
 | Backend | Google Apps Script (`doPost`) |
 | Lưu trữ | Google Sheets (data) + Google Drive (ảnh) |
 | Auth/State | localStorage (phiên đăng nhập, system key) |
