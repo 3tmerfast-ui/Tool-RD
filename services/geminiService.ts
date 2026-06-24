@@ -11,6 +11,7 @@
 import { ProductAnalysis, DesignMode, RopeType, AppTab, RetentionLevel } from "../types";
 import { generateFlowImage, pingFlowExtension } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
+import { whiteToTransparent } from "./imageUtils";
 
 export const cleanJsonString = _cleanJson;
 
@@ -23,7 +24,9 @@ export const cleanupProductImage = async (imageBase64: string): Promise<string> 
     "AND any watermark, signature or text overlay. Keep ONLY the artwork with original colors and sharp edges. " +
     "Output on a fully TRANSPARENT background (alpha); if unavailable use 100% PURE WHITE (#FFFFFF). High-fidelity.";
   try {
-    return await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
+    const generated = await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
+    // Tách nền trắng -> trong suốt phía client (Flow thường xuất nền trắng, không alpha).
+    return await whiteToTransparent(generated);
   } catch {
     // Nếu extension lỗi, trả ảnh gốc để luồng không vỡ.
     return imageBase64;

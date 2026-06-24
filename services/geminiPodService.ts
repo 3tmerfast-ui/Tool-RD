@@ -11,6 +11,7 @@
 import { ProductAnalysis, DesignMode, RopeType, AppTab, PRODUCT_MATERIALS } from "../types";
 import { generateFlowImage } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
+import { whiteToTransparent } from "./imageUtils";
 
 export const cleanJsonString = _cleanJson;
 
@@ -25,7 +26,9 @@ export const cleanupProductImage = async (imageBase64: string): Promise<string> 
     "Output the isolated design on a fully TRANSPARENT background (alpha); if transparency is unavailable use 100% PURE WHITE (#FFFFFF). " +
     "High resolution, no clutter, no border.";
   try {
-    return await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
+    const generated = await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
+    // Tách nền trắng -> trong suốt phía client (Flow thường xuất nền trắng, không alpha).
+    return await whiteToTransparent(generated);
   } catch {
     return imageBase64;
   }
