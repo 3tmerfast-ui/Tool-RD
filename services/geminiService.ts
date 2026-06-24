@@ -11,26 +11,15 @@
 import { ProductAnalysis, DesignMode, RopeType, AppTab, RetentionLevel } from "../types";
 import { generateFlowImage, pingFlowExtension } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
-import { whiteToTransparent } from "./imageUtils";
+import { cutoutBackground } from "./imageUtils";
 
 export const cleanJsonString = _cleanJson;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const cleanupProductImage = async (imageBase64: string): Promise<string> => {
-  const prompt =
-    "Extract the printable DESIGN / GRAPHIC from this photo as a CLEAN FLAT artwork. " +
-    "REMOVE completely: background, t-shirt/garment fabric, mockup, wrinkles, photo lighting, hangers, ropes, " +
-    "AND any watermark, signature or text overlay. Keep ONLY the artwork with original colors and sharp edges. " +
-    "Output on a fully TRANSPARENT background (alpha); if unavailable use 100% PURE WHITE (#FFFFFF). High-fidelity.";
-  try {
-    const generated = await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
-    // Tách nền trắng -> trong suốt phía client (Flow thường xuất nền trắng, không alpha).
-    return await whiteToTransparent(generated);
-  } catch {
-    // Nếu extension lỗi, trả ảnh gốc để luồng không vỡ.
-    return imageBase64;
-  }
+  // CẮT NỀN THẬT trên ảnh gốc: giữ nguyên 100% chi tiết, chỉ xoá phông nền -> PNG trong suốt.
+  return cutoutBackground(imageBase64);
 };
 
 export const analyzeProductDesign = async (

@@ -6,6 +6,33 @@
  * tránh viền răng cưa.
  */
 
+const blobToDataURL = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+/**
+ * CẮT NỀN THẬT (không AI sinh ảnh): dùng @imgly/background-removal segment chủ thể
+ * ngay trên trình duyệt, GIỮ NGUYÊN mọi pixel gốc (móc treo, chữ, chi tiết) và chỉ
+ * xoá phông nền -> PNG trong suốt. Model tải lần đầu (~vài MB) rồi được cache.
+ *
+ * Lỗi/không hỗ trợ -> trả lại ảnh gốc để luồng không vỡ.
+ */
+export async function cutoutBackground(imageSrc: string): Promise<string> {
+  if (typeof document === "undefined") return imageSrc;
+  try {
+    const { removeBackground } = await import("@imgly/background-removal");
+    const blob = await removeBackground(imageSrc, { output: { format: "image/png" } });
+    return await blobToDataURL(blob);
+  } catch (e) {
+    console.warn("[cutoutBackground] fallback -> ảnh gốc:", e);
+    return imageSrc;
+  }
+}
+
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const img = new Image();

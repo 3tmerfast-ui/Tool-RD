@@ -11,27 +11,16 @@
 import { ProductAnalysis, DesignMode, RopeType, AppTab, PRODUCT_MATERIALS } from "../types";
 import { generateFlowImage } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
-import { whiteToTransparent } from "./imageUtils";
+import { cutoutBackground } from "./imageUtils";
 
 export const cleanJsonString = _cleanJson;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const cleanupProductImage = async (imageBase64: string): Promise<string> => {
-  const prompt =
-    "Extract the main printable DESIGN / ILLUSTRATION from this product photo as a CLEAN FLAT GRAPHIC. " +
-    "REMOVE completely: the real-world photographic background, the physical product 3D frame, glass/acrylic " +
-    "reflections and photo lighting, hangers, ropes, hands, AND any watermark, signature, logo or text overlay. " +
-    "Keep ONLY the artwork with its original colors, line work and details, sharp clean edges. " +
-    "Output the isolated design on a fully TRANSPARENT background (alpha); if transparency is unavailable use 100% PURE WHITE (#FFFFFF). " +
-    "High resolution, no clutter, no border.";
-  try {
-    const generated = await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
-    // Tách nền trắng -> trong suốt phía client (Flow thường xuất nền trắng, không alpha).
-    return await whiteToTransparent(generated);
-  } catch {
-    return imageBase64;
-  }
+  // CẮT NỀN THẬT trên ảnh gốc: giữ nguyên 100% chi tiết (móc treo, chữ, design),
+  // chỉ xoá phông nền -> PNG trong suốt. KHÔNG dùng AI sinh ảnh ở bước này.
+  return cutoutBackground(imageBase64);
 };
 
 export const analyzeProductDesign = async (
