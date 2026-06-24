@@ -7,7 +7,8 @@
  * CẢNH BÁO: VITE_ => key bị nhúng vào bundle frontend. Chỉ dùng cho tool nội bộ.
  */
 
-import { ProductAnalysis, DesignMode, AppTab, RetentionLevel } from "../types";
+import { ProductAnalysis, DesignMode, AppTab, RetentionLevel, PRODUCT_MATERIALS } from "../types";
+import { ETSY_DESIGN_PRINCIPLES, getDesignGuide } from "./productKnowledge";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = "openai/gpt-4o-mini"; // vision-capable, rẻ
@@ -41,12 +42,22 @@ export const analyzeProductDesign = async (
   const apiKey = getKey();
   if (!apiKey) throw new Error("Chưa cấu hình VITE_OPENROUTER_API_KEY trong môi trường.");
 
+  const material = PRODUCT_MATERIALS[productType] || "";
+  const guide = getDesignGuide(productType);
+
   const systemInstruction =
-    "You are a Master Etsy Boutique Designer. Analyze product designs for high-end boutique standards. " +
-    "Focus on PILLAR layout, hand-painted textures, material realism. " +
-    `Product type: ${productType}. Design mode: ${designMode}. Tab: ${activeTab}. Retention target: ${retention}. ` +
-    'Return ONLY a JSON object with keys: "description" (string), "designCritique" (string), ' +
-    '"detectedComponents" (string[]), "redesignPrompt" (string — a detailed prompt to regenerate an improved version).';
+    "You are a Master Etsy POD Designer for the US market, specialized in suncatcher & ornament products. " +
+    "Analyze the product image to plan a REDESIGN that is the SAME concept/subject/layout but elevated to top-seller Etsy quality (a refined variation, NOT a copy and NOT a different design).\n" +
+    `PRODUCT TYPE: ${productType}.\n` +
+    (material ? `MATERIAL & SPECS: ${material}\n` : "") +
+    (guide ? `DESIGN GUIDE: ${guide}\n` : "") +
+    `MARKET PRINCIPLES: ${ETSY_DESIGN_PRINCIPLES}\n` +
+    `Design mode: ${designMode}. Retention target: ${retention}.\n` +
+    'Return ONLY a JSON object with keys: ' +
+    '"description" (1-2 sentences: what the design depicts), ' +
+    '"designCritique" (concrete Etsy redesign strategy: what to keep, what to elevate — composition, color, linework, personalization, material realism), ' +
+    '"detectedComponents" (string[]: 3-7 concrete elements to preserve), ' +
+    '"redesignPrompt" (ONE rich English image-gen prompt that keeps the same composition & subject, encodes the material realism + niche conventions above, and ends with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
 
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",

@@ -12,6 +12,7 @@ import { ProductAnalysis, DesignMode, RopeType, AppTab, PRODUCT_MATERIALS } from
 import { generateFlowImage } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
 import { cutoutBackground } from "./imageUtils";
+import { getDesignGuide } from "./productKnowledge";
 
 export const cleanJsonString = _cleanJson;
 
@@ -45,6 +46,8 @@ export const generateProductRedesigns = async (
   const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Hanging hardware: ${ropeType}.` : "";
   const material = PRODUCT_MATERIALS[productType] || "";
   const materialNote = material ? `MATERIAL REALISM (${productType}): ${material}` : "";
+  const guide = getDesignGuide(productType);
+  const guideNote = guide ? `ETSY DESIGN GUIDE: ${guide}` : "";
   const keepNote = selectedComponents && selectedComponents.length
     ? `MUST KEEP these elements (do not remove): ${selectedComponents.join(", ")}.`
     : "";
@@ -67,6 +70,7 @@ export const generateProductRedesigns = async (
   ${keepNote}
   ADJUSTMENTS (user): ${userNotes || "none — just elevate quality"}.
   ${materialNote}
+  ${guideNote}
   OUTPUT: single centered product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
   const results: string[] = [];

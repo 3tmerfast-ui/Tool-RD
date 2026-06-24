@@ -151,28 +151,28 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 mr-3 ${stage === ProcessStage.CLEANING ? 'border-indigo-500 text-indigo-500' : (stage !== ProcessStage.UPLOADING ? 'border-green-500 bg-green-500/10' : 'border-slate-700')}`}>
                   {stage !== ProcessStage.UPLOADING && stage !== ProcessStage.CLEANING ? <CheckCircle2 size={14} /> : '1'}
                 </div>
-                <span className="text-sm font-medium">Clean & Analyze HQ</span>
+                <span className="text-sm font-medium">Tách nền & Làm sạch HD</span>
               </div>
               
               <div className={`flex items-center ${[ProcessStage.REVIEW, ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? 'text-green-400' : 'text-slate-500'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 mr-3 ${stage === ProcessStage.ANALYZING ? 'border-indigo-500 text-indigo-500' : ([ProcessStage.REVIEW, ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? 'border-green-500 bg-green-500/10' : 'border-slate-700')}`}>
                   {[ProcessStage.REVIEW, ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? <CheckCircle2 size={14} /> : '2'}
                 </div>
-                <span className="text-sm font-medium">Brand DNA Extraction</span>
+                <span className="text-sm font-medium">Phân tích thiết kế</span>
               </div>
 
                <div className={`flex items-center ${[ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? 'text-green-400' : 'text-slate-500'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 mr-3 ${stage === ProcessStage.REVIEW ? 'border-amber-500 text-amber-500' : ([ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? 'border-green-500 bg-green-500/10' : 'border-slate-700')}`}>
                   {[ProcessStage.GENERATING, ProcessStage.COMPLETE].includes(stage) ? <CheckCircle2 size={14} /> : (stage === ProcessStage.REVIEW ? <Settings2 size={14} /> : '3')}
                 </div>
-                <span className="text-sm font-medium">Principle Setup</span>
+                <span className="text-sm font-medium">Tuỳ chỉnh & Chọn mẫu</span>
               </div>
 
               <div className={`flex items-center ${stage === ProcessStage.COMPLETE ? 'text-green-400' : 'text-slate-500'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 mr-3 ${stage === ProcessStage.GENERATING ? 'border-indigo-500 text-indigo-500' : (stage === ProcessStage.COMPLETE ? 'border-green-500 bg-green-500/10' : 'border-slate-700')}`}>
                   {stage === ProcessStage.COMPLETE ? <CheckCircle2 size={14} /> : '4'}
                 </div>
-                <span className="text-sm font-medium">Generate Brand Systems</span>
+                <span className="text-sm font-medium">Tạo thiết kế mới</span>
               </div>
             </div>
           </div>
@@ -183,7 +183,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
               <h3 className="font-semibold text-slate-200 flex items-center">
                 <Wand2 className="w-4 h-4 mr-2 text-purple-400" />
-                Fashion Strategy & Philosophy
+                Phân tích & Chiến lược thiết kế
               </h3>
             </div>
             
@@ -197,12 +197,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
               ) : analysis ? (
                 <>
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Original Analysis</h4>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phân tích gốc</h4>
                     <p className="text-sm text-slate-300 leading-relaxed">{analysis.description}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Brand DNA & Strategy</h4>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chiến lược Redesign</h4>
                     <div className="p-4 bg-purple-950/20 border border-purple-900/50 rounded-xl text-sm text-purple-200 leading-relaxed whitespace-pre-wrap shadow-inner">
                       {analysis.designCritique}
                     </div>
@@ -210,7 +210,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 </>
               ) : (
                 <div className="h-full flex items-center justify-center text-slate-600 text-sm italic">
-                  Analysis will appear here...
+                  Phân tích sẽ hiển thị ở đây...
                 </div>
               )}
             </div>
