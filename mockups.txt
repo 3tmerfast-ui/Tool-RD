@@ -1,0 +1,31 @@
+
+function handleSaveMockup(doc, data) {
+  var sheet = doc.getSheetByName('MockupTemplates') || doc.insertSheet('MockupTemplates');
+  var folder = getOrCreateFolder(MOCKUP_FOLDER_NAME);
+  var decodedBlob = Utilities.base64Decode(data.image.split(",")[1]);
+  var file = folder.createFile(Utilities.newBlob(decodedBlob, "image/png", data.mockupName + ".png"));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  var url = "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w1000";
+  sheet.appendRow([data.storeName, data.mockupName, url, data.username, new Date()]);
+  return { status: 'success', url: url };
+}
+
+function handleGetMockups(doc) {
+  var sheet = doc.getSheetByName('MockupTemplates');
+  if (!sheet) return { status: 'success', data: [] };
+  var values = sheet.getDataRange().getValues();
+  var list = [];
+  for (var i = 1; i < values.length; i++) list.push({ storeName: values[i][0], name: values[i][1], url: values[i][2] });
+  return { status: 'success', data: list };
+}
+
+function handleLogFinalMockup(doc, data) {
+  var sheet = doc.getSheetByName('FinalMockups') || doc.insertSheet('FinalMockups');
+  var folder = getOrCreateFolder(FOLDER_NAME);
+  var decodedBlob = Utilities.base64Decode(data.image.split(",")[1]);
+  var file = folder.createFile(Utilities.newBlob(decodedBlob, "image/png", "Final_" + new Date().getTime() + ".png"));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  var url = "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w2500";
+  sheet.appendRow([new Date(), data.username, data.designName, url]);
+  return { status: 'success', url: url };
+}

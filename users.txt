@@ -1,0 +1,16 @@
+
+function handleGetUsers(doc) {
+  var sheet = doc.getSheetByName('Users');
+  if (!sheet) return { status: 'success', users: [] };
+  var values = sheet.getDataRange().getValues();
+  var list = [];
+  for (var i = 1; i < values.length; i++) list.push({ username: values[i][0], permissions: values[i][3], lastActive: values[i][6], currentStatus: values[i][7] });
+  return { status: 'success', users: list };
+}
+
+function handleUpdatePermission(doc, data) {
+  var sheet = doc.getSheetByName('Users');
+  var users = sheet.getDataRange().getValues();
+  for (var i = 1; i < users.length; i++) if (users[i][0] == data.targetUser) sheet.getRange(i+1, 4).setValue(data.newPermission);
+  return { status: 'success' };
+}

@@ -1,0 +1,40 @@
+
+var SPECIFIC_SHEET_ID = null; 
+var FOLDER_NAME = "ProductPerfect_Images"; 
+var MOCKUP_FOLDER_NAME = "ProductPerfect_MockupTemplates";
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(30000); 
+
+  try {
+    var doc = SPECIFIC_SHEET_ID ? SpreadsheetApp.openById(SPECIFIC_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+    var requestData = JSON.parse(e.postData.contents);
+    var action = requestData.action;
+    var result = { status: 'error', message: 'Hành động không hợp lệ: ' + action };
+
+    if (action === 'register') result = handleRegister(doc, requestData);
+    else if (action === 'login') result = handleLogin(doc, requestData);
+    else if (action === 'logout') result = handleLogout(doc, requestData);
+    else if (action === 'heartbeat') result = handleHeartbeat(doc, requestData);
+    else if (action === 'log_design') result = handleLogDesign(doc, requestData);
+    else if (action === 'update_design') result = handleUpdateDesign(doc, requestData);
+    else if (action === 'save_config') result = handleSaveConfig(doc, requestData);
+    else if (action === 'get_config') result = handleGetConfig(doc);
+    else if (action === 'get_users') result = handleGetUsers(doc, requestData);
+    else if (action === 'update_permission') result = handleUpdatePermission(doc, requestData);
+    else if (action === 'save_mockup') result = handleSaveMockup(doc, requestData);
+    else if (action === 'get_mockups') result = handleGetMockups(doc);
+    else if (action === 'log_final_mockup') result = handleLogFinalMockup(doc, requestData);
+    else if (action === 'get_image_base64') result = handleGetImageBase64(requestData);
+    else if (action === 'get_designs') result = handleGetDesigns(doc, requestData);
+    else if (action === 'save_pref') result = handleSavePreference(doc, requestData);
+    else if (action === 'get_pref') result = handleGetPreference(doc, requestData);
+
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ 'status': 'error', 'message': err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}

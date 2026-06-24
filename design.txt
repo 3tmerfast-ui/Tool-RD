@@ -1,0 +1,89 @@
+
+function handleLogDesign(doc, data) {
+  var sheet = doc.getSheetByName('Designs') || doc.insertSheet('Designs');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Timestamp', 'Username', 'Product Type', 'Similarity Target', 'Prompt', 'Description', 'Image 1', 'Image 2', 'Image 3', 'Image 4', 'Image 5', 'Image 6', 'Tab', 'Design Mode', 'Rope Type']); 
+  }
+  
+  var folder = getOrCreateFolder(FOLDER_NAME);
+  var imageUrls = [];
+  var images = data.images || [];
+  var timestamp = new Date();
+  var username = data.username || 'Anonymous';
+
+  for (var i = 0; i < 6; i++) {
+    if (i < images.length && images[i]) {
+      try {
+        var base64Data = images[i].split(",")[1] || images[i];
+        var decodedBlob = Utilities.base64Decode(base64Data);
+        var file = folder.createFile(Utilities.newBlob(decodedBlob, "image/png", username + "_" + timestamp.getTime() + "_" + i + ".png"));
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        imageUrls.push("https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w2500");
+      } catch (err) { imageUrls.push("Error"); }
+    } else imageUrls.push("");
+  }
+  
+  sheet.appendRow([
+    timestamp, 
+    username, 
+    data.productType || 'Unknown', 
+    data.similarity || 'N/A', 
+    data.prompt || '', 
+    data.description || '', 
+    imageUrls[0], imageUrls[1], imageUrls[2], imageUrls[3], imageUrls[4], imageUrls[5], 
+    data.tab || 'POD', 
+    data.designMode || 'NEW_CONCEPT',
+    data.ropeType || 'None'
+  ]);
+  
+  return { status: 'success', designId: "sheet_" + (sheet.getLastRow() - 1) };
+}
+
+function handleGetDesigns(doc, data) {
+  var sheet = doc.getSheetByName('Designs');
+  if (!sheet) return { status: 'success', data: [] };
+  var values = sheet.getDataRange().getValues();
+  var designs = [];
+  for (var i = 1; i < values.length; i++) {
+    if (data.isAdmin || values[i][1] === data.username) {
+      designs.push({
+        id: "sheet_" + i,
+        timestamp: values[i][0],
+        username: values[i][1],
+        productType: values[i][2],
+        similarity: values[i][3],
+        prompt: values[i][4],
+        description: values[i][5],
+        images: [values[i][6], values[i][7], values[i][8], values[i][9], values[i][10], values[i][11]].filter(function(v) { return !!v && typeof v === 'string' && v.indexOf("http") === 0; }),
+        tab: values[i][12] || 'POD', // CỘT 13 - LẤY DỮ LIỆU TAB
+        designMode: values[i][13] || 'NEW_CONCEPT',
+        ropeType: values[i][14] || 'None'
+      });
+    }
+  }
+  return { status: 'success', data: designs.reverse() }; 
+}
+
+function handleUpdateDesign(doc, data) {
+  var sheet = doc.getSheetByName('Designs');
+  var rowIndex = parseInt(data.designId.split("_")[1]);
+  var folder = getOrCreateFolder(FOLDER_NAME);
+  var decodedBlob = Utilities.base64Decode(data.image.split(",")[1]);
+  var file = folder.createFile(Utilities.newBlob(decodedBlob, "image/png", "Edit_" + new Date().getTime() + ".png"));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  var url = "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w2500";
+  sheet.getRange(rowIndex + 1, 7 + data.imageIndex).setValue(url);
+  return { status: 'success', url: url };
+}
+
+function handleDeleteDesign(doc, data) {
+  var sheet = doc.getSheetByName('Designs');
+  if (!sheet) return { status: 'error', message: 'Sheet not found' };
+  var rowIndex = parseInt(data.designId.split("_")[1]);
+  var values = sheet.getDataRange().getValues();
+  if (data.isAdmin || values[rowIndex][1] === data.username) {
+    sheet.deleteRow(rowIndex + 1);
+    return { status: 'success' };
+  }
+  return { status: 'error', message: 'Permission denied' };
+}

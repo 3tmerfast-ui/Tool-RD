@@ -1,0 +1,32 @@
+
+function handleSavePreference(doc, data) {
+  var sheet = doc.getSheetByName('UserPrefs') || doc.insertSheet('UserPrefs');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Username', 'PrefKey', 'PrefValue', 'LastUpdated']);
+  
+  var values = sheet.getDataRange().getValues();
+  var foundRow = -1;
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][0] == data.username && values[i][1] == data.key) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  
+  if (foundRow > -1) {
+    sheet.getRange(foundRow, 3).setValue(data.value);
+    sheet.getRange(foundRow, 4).setValue(new Date());
+  } else {
+    sheet.appendRow([data.username, data.key, data.value, new Date()]);
+  }
+  return { status: 'success' };
+}
+
+function handleGetPreference(doc, data) {
+  var sheet = doc.getSheetByName('UserPrefs');
+  if (!sheet) return { status: 'success', value: null };
+  var values = sheet.getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][0] == data.username && values[i][1] == data.key) return { status: 'success', value: values[i][2] };
+  }
+  return { status: 'success', value: null };
+}

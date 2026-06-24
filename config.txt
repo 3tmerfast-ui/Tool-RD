@@ -1,0 +1,11 @@
+
+function handleSaveConfig(doc, data) {
+  var sheet = doc.getSheetByName('Config') || doc.insertSheet('Config');
+  sheet.getRange('A2').setValue(data.apiKey);
+  return { status: 'success' };
+}
+
+function handleGetConfig(doc) {
+  var sheet = doc.getSheetByName('Config');
+  return { status: 'success', apiKey: sheet ? sheet.getRange('A2').getValue() : "" };
+}

@@ -1,0 +1,43 @@
+
+function handleRegister(doc, data) {
+  var sheet = doc.getSheetByName('Users') || doc.insertSheet('Users');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Username', 'Password', 'Created At', 'Permissions', 'Last IP', 'Last Login', 'Last Active', 'Status']);
+  var users = sheet.getDataRange().getValues();
+  for (var i = 1; i < users.length; i++) if (users[i][0] == data.username) return { status: 'error', message: 'Tài khoản tồn tại' };
+  sheet.appendRow([data.username, data.password, new Date(), 'PENDING', data.ip, '', '', 'Offline']);
+  return { status: 'success' };
+}
+
+function handleLogin(doc, data) {
+  var sheet = doc.getSheetByName('Users');
+  if (!sheet) return { status: 'error', message: 'Hệ thống chưa sẵn sàng' };
+  var users = sheet.getDataRange().getValues();
+  for (var i = 1; i < users.length; i++) {
+    if (users[i][0] == data.username && users[i][1] == data.password) {
+      if (users[i][3] === 'PENDING') return { status: 'error', message: 'Chờ duyệt' };
+      sheet.getRange(i+1, 5).setValue(data.ip);
+      sheet.getRange(i+1, 6).setValue(new Date());
+      sheet.getRange(i+1, 8).setValue('Online');
+      return { status: 'success', user: { username: users[i][0], permissions: users[i][3] } };
+    }
+  }
+  return { status: 'error', message: 'Sai thông tin' };
+}
+
+function handleLogout(doc, data) {
+  var sheet = doc.getSheetByName('Users');
+  if (sheet) {
+    var users = sheet.getDataRange().getValues();
+    for (var i = 1; i < users.length; i++) if (users[i][0] == data.username) sheet.getRange(i+1, 8).setValue('Offline');
+  }
+  return { status: 'success' };
+}
+
+function handleHeartbeat(doc, data) {
+  var sheet = doc.getSheetByName('Users');
+  if (sheet) {
+    var users = sheet.getDataRange().getValues();
+    for (var i = 1; i < users.length; i++) if (users[i][0] == data.username) sheet.getRange(i+1, 7).setValue(new Date());
+  }
+  return { status: 'success' };
+}

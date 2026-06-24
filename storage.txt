@@ -1,0 +1,53 @@
+
+function getOrCreateFolder(name) {
+  var folders = DriveApp.getFoldersByName(name);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
+}
+
+/**
+ * Xử lý lấy Base64 của ảnh qua Proxy để tránh lỗi CORS trên Frontend.
+ * Ưu tiên dùng DriveApp cho các link Google Drive để ổn định nhất.
+ */
+function handleGetImageBase64(data) {
+  try {
+    var url = data.url;
+    var fileId = "";
+    
+    // Kiểm tra nếu là link Google Drive
+    if (url.indexOf('drive.google.com') > -1 || url.indexOf('docs.google.com') > -1) {
+      // Trích xuất ID từ nhiều định dạng link khác nhau
+      var matchId = url.match(/id=([^&/]+)/) || url.match(/\/d\/([^/]+)/) || url.match(/open\?id=([^&/]+)/);
+      if (matchId && matchId[1]) {
+        fileId = matchId[1];
+        var file = DriveApp.getFileById(fileId);
+        var blob = file.getBlob();
+        return { 
+          status: 'success', 
+          base64: "data:" + (blob.getContentType() || "image/png") + ";base64," + Utilities.base64Encode(blob.getBytes()) 
+        };
+      }
+    }
+
+    // Nếu không phải link Drive, dùng UrlFetchApp (yêu cầu quyền script.external_request)
+    var options = {
+      'muteHttpExceptions': true,
+      'followRedirects': true,
+      'headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    };
+    
+    var response = UrlFetchApp.fetch(url, options);
+    if (response.getResponseCode() === 200) {
+      var blob = response.getBlob();
+      return { 
+        status: 'success', 
+        base64: "data:" + (blob.getContentType() || "image/png") + ";base64," + Utilities.base64Encode(blob.getBytes()) 
+      };
+    } else {
+      return { status: 'error', message: 'HTTP Error: ' + response.getResponseCode() };
+    }
+  } catch (e) { 
+    return { status: 'error', message: 'Backend Proxy Error: ' + e.toString() }; 
+  }
+}

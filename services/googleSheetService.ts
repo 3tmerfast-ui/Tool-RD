@@ -1,0 +1,158 @@
+
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqZAbafJK3QLPhk8DTDuaVyvkY4u_eiTN6xTQtLm8GyaPuezF4ATAErsKubkQHNCyY/exec";
+
+interface ApiResponse {
+  status: 'success' | 'error';
+  message: string;
+  user?: { 
+    username: string;
+    permissions?: string;
+    systemKey?: string; 
+  };
+  users?: any[];
+  data?: any;
+  url?: string;
+  base64?: string;
+  designId?: string;
+  apiKey?: string;
+  value?: any;
+}
+
+export const getPublicIP = async (): Promise<string> => {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch (error) {
+    console.warn("Could not fetch public IP", error);
+    return "Unknown/Hidden";
+  }
+};
+
+const callScript = async (payload: any, useKeepAlive = false): Promise<ApiResponse> => {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("example-replace-this")) {
+    return { status: 'error', message: 'Chưa cấu hình Backend URL.' };
+  }
+
+  try {
+    const body = JSON.stringify(payload);
+    const fetchOptions: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: body,
+      mode: 'cors',
+      cache: 'no-cache',
+      redirect: 'follow',
+    };
+
+    if (useKeepAlive && body.length < 60000) fetchOptions.keepalive = true;
+    const response = await fetch(GOOGLE_SCRIPT_URL, fetchOptions);
+    if (!response.ok) return { status: 'error', message: `HTTP Error: ${response.status}` };
+    return await response.json();
+  } catch (error: any) {
+    return { status: 'error', message: error.message || 'Lỗi kết nối Server.' };
+  }
+};
+
+export const saveUserPreference = async (username: string, key: string, value: string): Promise<ApiResponse> => {
+  return callScript({ action: 'save_pref', username, key, value });
+};
+
+export const getUserPreference = async (username: string, key: string): Promise<ApiResponse> => {
+  return callScript({ action: 'get_pref', username, key });
+};
+
+export const getImageBase64 = async (url: string): Promise<string> => {
+  const res = await callScript({ action: 'get_image_base64', url });
+  if (res.status === 'success' && res.base64) return res.base64;
+  throw new Error(res.message || "Failed to fetch image base64 via proxy");
+};
+
+export const registerUser = async (username: string, password: string): Promise<ApiResponse> => {
+  const ip = await getPublicIP(); 
+  return callScript({ action: 'register', username, password, ip });
+};
+
+export const loginUser = async (username: string, password: string): Promise<ApiResponse> => {
+  const ip = await getPublicIP();
+  return callScript({ action: 'login', username, password, ip });
+};
+
+export const logoutUser = (username: string): void => {
+    callScript({ action: 'logout', username }, true).catch(() => {});
+};
+
+export const sendHeartbeat = async (username: string): Promise<void> => {
+    const res = await callScript({ action: 'heartbeat', username });
+    if (res.status === 'error') throw new Error(res.message);
+};
+
+export const saveSystemConfig = async (apiKey: string): Promise<ApiResponse> => {
+  return callScript({ action: 'save_config', apiKey });
+};
+
+export const getSystemConfig = async (): Promise<ApiResponse> => {
+  return callScript({ action: 'get_config' });
+};
+
+export const getUsers = async (): Promise<ApiResponse> => {
+  return callScript({ action: 'get_users' });
+};
+
+export const updateUserPermission = async (targetUser: string, newPermission: string): Promise<ApiResponse> => {
+  return callScript({ action: 'update_permission', targetUser, newPermission });
+};
+
+export const sendDataToSheet = async (
+  images: string[], 
+  prompt: string,
+  description: string,
+  username: string,
+  productType: string,
+  similarity: string,
+  tab: string,
+  designMode: string,
+  ropeType: string = 'None'
+): Promise<ApiResponse> => {
+  return await callScript({
+    action: 'log_design',
+    username: username,
+    images: images, 
+    prompt: prompt,
+    description: description,
+    productType: productType,
+    similarity: similarity,
+    tab: tab,
+    designMode: designMode,
+    ropeType: ropeType
+  });
+};
+
+export const updateDesignInSheet = async (
+    username: string,
+    designId: string,
+    imageIndex: number,
+    newImageBase64: string
+): Promise<ApiResponse> => {
+    return callScript({ action: 'update_design', username, designId, imageIndex, image: newImageBase64 });
+};
+
+export const deleteDesignFromSheet = async (username: string, designId: string, isAdmin: boolean): Promise<ApiResponse> => {
+    return callScript({ action: 'delete_design', username, designId, isAdmin });
+};
+
+export const saveMockupToSheet = async (storeName: string, mockupName: string, imageBase64: string, username: string): Promise<ApiResponse> => {
+  return callScript({ action: 'save_mockup', storeName, mockupName, image: imageBase64, username });
+};
+
+export const getMockupsFromSheet = async (): Promise<ApiResponse> => {
+  return callScript({ action: 'get_mockups' });
+};
+
+export const saveFinalMockupResult = async (username: string, designName: string, imageBase64: string): Promise<ApiResponse> => {
+  return callScript({ action: 'log_final_mockup', username, designName, image: imageBase64 });
+};
+
+export const getDesignsFromSheet = async (username: string, isAdmin: boolean): Promise<ApiResponse> => {
+  return callScript({ action: 'get_designs', username, isAdmin });
+};

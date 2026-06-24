@@ -1,0 +1,3 @@
+// This file has been refactored into:
+// main.txt, config.txt, auth.txt, users.txt, design.txt, mockups.txt, preferences.txt, storage.txt
+// Please refer to those files for backend logic.
