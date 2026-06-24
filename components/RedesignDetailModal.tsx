@@ -12,7 +12,7 @@ interface RedesignDetailModalProps {
   onRemix: (instruction: string) => Promise<void>;
   onRemoveBackground: () => Promise<void>;
   onSplit: () => Promise<string[]>;
-  onGenerateMockup: (img: string) => Promise<string>;
+  onGenerateMockup: (img: string, onPartial?: (imgs: string[]) => void) => Promise<string[]>;
   onUpdateImage?: (newImage: string) => void;
   isRemixing: boolean;
   onUndo?: () => void;
@@ -73,13 +73,16 @@ export const applyAlphaFilter = async (src: string): Promise<string> => {
 export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   imageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onGenerateMockup, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
 }) => {
-  const [aiMockup, setAiMockup] = useState<string | null>(null);
+  const [aiMockups, setAiMockups] = useState<string[]>([]);
+  const [showMockups, setShowMockups] = useState(false);
   const [isMockuping, setIsMockuping] = useState(false);
+  const MOCKUP_COUNT = 6;
   const handleAiMockup = async () => {
     setIsMockuping(true);
+    setAiMockups([]);
+    setShowMockups(true);
     try {
-      const m = await onGenerateMockup(imageUrl);
-      if (m) setAiMockup(m);
+      await onGenerateMockup(imageUrl, (imgs) => setAiMockups([...imgs]));
     } catch (e) {
       alert("Tạo mockup thất bại. Đảm bảo extension Flow đang bật.");
     } finally {
@@ -522,15 +525,37 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                     )}
                 </div>
 
-                {/* AI Mockup Result Overlay */}
-                {aiMockup && (
-                    <div className="absolute inset-0 z-30 bg-black/90 flex flex-col items-center justify-center p-6 animate-fade-in">
-                        <img src={aiMockup} alt="AI Mockup" className="max-h-[80%] max-w-full object-contain rounded-xl shadow-2xl" />
-                        <div className="flex gap-3 mt-5">
-                            <a href={aiMockup} download="mockup.png" className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-500">
-                                <Download size={18} /> Tải Mockup
-                            </a>
-                            <button onClick={() => setAiMockup(null)} className="px-6 py-3 bg-slate-700 text-white rounded-full font-bold hover:bg-slate-600">Đóng</button>
+                {/* AI Mockups Grid (6 hình) — nền đục, không lòi mẫu gốc phía sau */}
+                {showMockups && (
+                    <div className="absolute inset-0 z-30 bg-slate-950 flex flex-col animate-fade-in">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0f172a]">
+                            <h4 className="text-sm font-bold text-slate-100 flex items-center">
+                                <ImageIcon size={16} className="mr-2 text-purple-400" />
+                                Mockup sản phẩm ({aiMockups.length}/{MOCKUP_COUNT})
+                                {isMockuping && <Loader2 size={14} className="animate-spin ml-3 text-purple-400" />}
+                            </h4>
+                            <button onClick={() => setShowMockups(false)} className="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700">Đóng</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                                {Array(MOCKUP_COUNT).fill(0).map((_, i) => {
+                                    const m = aiMockups[i];
+                                    if (m) return (
+                                        <div key={i} className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 animate-fade-in">
+                                            <img src={m} alt={`Mockup ${i + 1}`} className="w-full h-full object-cover aspect-[3/4]" />
+                                            <a href={m} download={`mockup-${i + 1}.png`} className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 bg-indigo-600/90 text-white rounded-lg text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-indigo-500">
+                                                <Download size={12} /> Tải
+                                            </a>
+                                        </div>
+                                    );
+                                    if (isMockuping) return (
+                                        <div key={i} className="aspect-[3/4] rounded-xl bg-slate-900 border border-slate-800 animate-pulse flex items-center justify-center">
+                                            <ImageIcon className="text-slate-700 w-8 h-8" />
+                                        </div>
+                                    );
+                                    return null;
+                                })}
+                            </div>
                         </div>
                     </div>
                 )}

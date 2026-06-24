@@ -102,17 +102,53 @@ export const generateProductRedesigns = async (
  * Tạo MOCKUP sản phẩm thật từ artwork: ghép design vào bối cảnh bán hàng Etsy
  * (vd suncatcher treo cửa sổ, ánh sáng xuyên qua). Dùng artwork làm reference.
  */
-export const generateProductMockup = async (
-  designImage: string,
-  productType: string
-): Promise<string> => {
-  const material = PRODUCT_MATERIALS[productType] || "";
-  const prompt = `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
-  Use the REFERENCE IMAGE as the printed artwork — keep it identical, do not redraw it.
+// 6 bối cảnh mockup khác nhau để ra 6 ảnh đa dạng.
+const MOCKUP_SCENES = [
+  "hung in a bright sunlit window, daylight passing through it, cozy living room softly blurred (bokeh), colored light cast on the sill",
+  "hung in a cozy bedroom window with sheer white curtains, soft morning light, warm calm mood",
+  "hung in a kitchen window surrounded by potted green plants, fresh bright natural light",
+  "a close-up hero product shot on a clean neutral light-gray background, soft studio lighting showing material detail",
+  "hanging on a rustic wall hook next to a window, warm farmhouse interior, gentle side light",
+  "hung on a glass door/porch with a green garden visible outside, airy outdoor daylight",
+];
+
+const buildMockupPrompt = (productType: string, material: string, scene: string) =>
+  `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
+  Use the REFERENCE IMAGE as the printed artwork — keep it IDENTICAL, do not redraw or alter the design.
   Material: ${material}
-  Scene: the finished product professionally hung in a bright window with soft natural daylight passing through it, cozy tasteful home interior softly blurred in the background (bokeh), gentle colored light reflections, realistic hanging cord/chain and metal loop.
-  Style: premium lifestyle e-commerce photography, sharp focus on the product, warm inviting mood, magazine quality, vertical 4:5 framing.`;
-  return generateFlowImage({ prompt, aspectRatio: "3:4", referenceImage: designImage });
+  Scene: the finished product professionally ${scene}; realistic hanging cord/chain and metal loop.
+  Style: premium lifestyle e-commerce photography, sharp focus on the product, magazine quality, vertical 4:5 framing.`;
+
+/** Tạo 1 mockup (giữ tương thích cũ). */
+export const generateProductMockup = async (designImage: string, productType: string): Promise<string> => {
+  const material = PRODUCT_MATERIALS[productType] || "";
+  return generateFlowImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "3:4", referenceImage: designImage });
+};
+
+/** Tạo NHIỀU mockup (mặc định 6 bối cảnh khác nhau), stream từng ảnh qua onPartial. */
+export const generateProductMockups = async (
+  designImage: string,
+  productType: string,
+  count: number = 6,
+  onPartial?: (images: string[]) => void
+): Promise<string[]> => {
+  const material = PRODUCT_MATERIALS[productType] || "";
+  const results: string[] = [];
+  for (let i = 0; i < count; i++) {
+    if (i > 0) await sleep(2000);
+    try {
+      const img = await generateFlowImage({
+        prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[i % MOCKUP_SCENES.length]),
+        aspectRatio: "3:4",
+        referenceImage: designImage,
+      });
+      results.push(img);
+      onPartial?.([...results]);
+    } catch (e) {
+      if (results.length === 0 && i === count - 1) throw e;
+    }
+  }
+  return results;
 };
 
 export const extractDesignElements = async (imageBase64: string): Promise<string[]> => {
