@@ -41,7 +41,8 @@ export const generateProductRedesigns = async (
   _useUltraFlag: boolean,
   _activeTab: AppTab = AppTab.TSHIRT,
   originalImage?: string,
-  _retention: RetentionLevel = "40%"
+  _retention: RetentionLevel = "40%",
+  onPartial?: (images: string[]) => void
 ): Promise<string[]> => {
   const VARIATIONS = [
     "Layout A: original composition, elegant serif typography, refined premium linework.",
@@ -65,6 +66,7 @@ export const generateProductRedesigns = async (
         aspectRatio: "1:1",
       });
       results.push(img);
+      onPartial?.([...results]);
     } catch (e) {
       if (results.length === 0 && i === 2) throw e; // không tạo được ảnh nào -> báo lỗi
     }

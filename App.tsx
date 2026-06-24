@@ -186,7 +186,7 @@ function App() {
     try {
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
-      const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, "T-Shirt", false, AppTab.TSHIRT, originalImage, retention);
+      const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, "T-Shirt", false, AppTab.TSHIRT, originalImage, retention, (imgs) => setRedesigns([...imgs]));
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
       
@@ -207,7 +207,7 @@ function App() {
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
       const effectiveType = (productType === PRODUCT_TYPES[0] && analysis.detectedProductType) ? analysis.detectedProductType : productType;
-      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, effectiveType, processedImage || originalImage || undefined);
+      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, effectiveType, processedImage || originalImage || undefined, (imgs) => setRedesigns([...imgs]));
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
       

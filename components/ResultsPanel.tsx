@@ -238,19 +238,15 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             </h3>
             
             <div className={`grid grid-cols-1 md:grid-cols-3 gap-6`}>
-              {stage === ProcessStage.GENERATING ? (
-                 Array(activeTab === AppTab.TSHIRT ? 3 : 6).fill(0).map((_, i) => (
-                    <div key={i} className="aspect-square bg-slate-900 rounded-xl animate-pulse flex items-center justify-center border border-slate-800 shadow-lg">
-                        <ImageIcon className="text-slate-700 w-10 h-10" />
-                    </div>
-                 ))
-              ) : (
-                 generatedRedesigns?.map((img, index) => {
+              {Array(activeTab === AppTab.TSHIRT ? 3 : 6).fill(0).map((_, index) => {
+                 const img = generatedRedesigns?.[index];
+                 // Ảnh đã tạo xong -> hiện ngay (không đợi đủ 6)
+                 if (img) {
                     return (
-                        <div 
-                        key={index} 
+                        <div
+                        key={index}
                         onClick={() => onImageClick && onImageClick(index)}
-                        className="group relative aspect-square bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-lg hover:shadow-2xl hover:border-indigo-500 transition-all cursor-pointer"
+                        className="group relative aspect-square bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-lg hover:shadow-2xl hover:border-indigo-500 transition-all cursor-pointer animate-fade-in"
                         >
                             <img src={img} alt={`Design ${index + 1}`} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
 
@@ -260,7 +256,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                     <ZoomIn className="w-4 h-4 mr-2" />
                                     Xem & Chỉnh sửa
                                     </span>
-                                    <button 
+                                    <button
                                     onClick={(e) => downloadImageAs2500px(e, img, `brand-dna-design-${index + 1}.png`, false)}
                                     className="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold text-[10px] uppercase flex items-center hover:bg-indigo-500 transition-colors border border-indigo-400 shadow-xl"
                                     >
@@ -271,8 +267,17 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             </div>
                         </div>
                     );
-                 })
-              )}
+                 }
+                 // Đang tạo, ô chưa có ảnh -> skeleton loading
+                 if (stage === ProcessStage.GENERATING) {
+                    return (
+                        <div key={index} className="aspect-square bg-slate-900 rounded-xl animate-pulse flex items-center justify-center border border-slate-800 shadow-lg">
+                            <ImageIcon className="text-slate-700 w-10 h-10" />
+                        </div>
+                    );
+                 }
+                 return null;
+              })}
             </div>
          </div>
       )}

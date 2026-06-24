@@ -41,7 +41,8 @@ export const generateProductRedesigns = async (
   selectedComponents: string[],
   userNotes: string,
   productType: string,
-  referenceImage?: string
+  referenceImage?: string,
+  onPartial?: (images: string[]) => void
 ): Promise<string[]> => {
   const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Hanging hardware: ${ropeType}.` : "";
   const material = PRODUCT_MATERIALS[productType] || "";
@@ -89,6 +90,7 @@ export const generateProductRedesigns = async (
         aspectRatio: "1:1",
       });
       results.push(img);
+      onPartial?.([...results]); // hiện ngay mẫu vừa xong
     } catch (e) {
       if (results.length === 0 && i === NUM_REDESIGNS - 1) throw e;
     }

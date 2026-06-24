@@ -88,6 +88,7 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   };
   const [activeSubTab, setActiveSubTab] = useState<'colors' | 'ropes' | 'parts' | 'split'>('colors');
   const [customInstruction, setCustomInstruction] = useState('');
+  const [customName, setCustomName] = useState('');
   const [designBase64, setDesignBase64] = useState<string>('');
   const [transparentDesign, setTransparentDesign] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -596,6 +597,27 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                         </div>
                     ) : (
                         <>
+                            <div className="space-y-3 pb-2 border-b border-slate-800">
+                                <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center"><Wand2 size={12} className="mr-2" /> Đổi tên cá nhân hoá</h4>
+                                <p className="text-[11px] text-slate-500 leading-relaxed">Nhập tên muốn hiển thị trên thiết kế (giữ nguyên font & vị trí, chỉ thay tên).</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={customName}
+                                        onChange={(e) => setCustomName(e.target.value)}
+                                        placeholder="VD: Olivia, James & Bun..."
+                                        className="flex-1 px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && customName.trim() && !isRemixing) handleRemixAction(`Replace ONLY the personalized name text in the design with "${customName.trim()}". Keep the exact same font style, size, color and position. Do not change anything else in the design.`); }}
+                                    />
+                                    <button
+                                        disabled={!customName.trim() || isRemixing}
+                                        onClick={() => handleRemixAction(`Replace ONLY the personalized name text in the design with "${customName.trim()}". Keep the exact same font style, size, color and position. Do not change anything else in the design.`)}
+                                        className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                    >
+                                        {isRemixing ? <Loader2 size={14} className="animate-spin" /> : 'Áp dụng'}
+                                    </button>
+                                </div>
+                            </div>
                             <div className="space-y-4">
                                 <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Remix Custom Instruction</h4>
                                 <div className="relative">
