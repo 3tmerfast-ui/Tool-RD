@@ -206,7 +206,8 @@ function App() {
     try {
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
-      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, productType, processedImage || originalImage || undefined);
+      const effectiveType = (productType === PRODUCT_TYPES[0] && analysis.detectedProductType) ? analysis.detectedProductType : productType;
+      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, effectiveType, processedImage || originalImage || undefined);
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
       
@@ -410,7 +411,8 @@ function App() {
           onGenerateMockup={async (img: string) => {
             let src = img;
             if (src.startsWith('http')) { try { src = await getImageBase64(src); } catch (e) {} }
-            return await generateProductMockup(src, productType);
+            const effectiveType = (productType === PRODUCT_TYPES[0] && analysis?.detectedProductType) ? analysis.detectedProductType : productType;
+            return await generateProductMockup(src, effectiveType);
           }}
           isRemixing={isRemixing}
           isTShirtMode={activeTab === AppTab.TSHIRT}

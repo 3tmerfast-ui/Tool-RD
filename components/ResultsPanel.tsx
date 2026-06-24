@@ -202,6 +202,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                       <p className="text-sm text-indigo-200 font-medium leading-relaxed p-3 bg-indigo-950/30 border border-indigo-900/50 rounded-lg">{analysis.coreTheme}</p>
                     </div>
                   )}
+                  {analysis.detectedMaterial && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-teal-400 uppercase tracking-wider">🧱 Chất liệu nhận diện{analysis.detectedProductType ? ` · ${analysis.detectedProductType}` : ''}</h4>
+                      <p className="text-sm text-teal-200/90 leading-relaxed p-3 bg-teal-950/20 border border-teal-900/40 rounded-lg">{analysis.detectedMaterial}</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phân tích gốc</h4>
                     <p className="text-sm text-slate-300 leading-relaxed">{analysis.description}</p>

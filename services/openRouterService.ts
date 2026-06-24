@@ -7,7 +7,7 @@
  * CẢNH BÁO: VITE_ => key bị nhúng vào bundle frontend. Chỉ dùng cho tool nội bộ.
  */
 
-import { ProductAnalysis, DesignMode, AppTab, RetentionLevel, PRODUCT_MATERIALS } from "../types";
+import { ProductAnalysis, DesignMode, AppTab, RetentionLevel, PRODUCT_MATERIALS, PRODUCT_TYPES } from "../types";
 import { ETSY_DESIGN_PRINCIPLES, getDesignGuide } from "./productKnowledge";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -48,19 +48,23 @@ export const analyzeProductDesign = async (
   const systemInstruction =
     "You are a Master Etsy POD Designer for the US market, specialized in suncatcher & ornament products.\n" +
     "Work in this STRICT ORDER (think step by step, then output JSON):\n" +
-    "STEP 1 — UNDERSTAND: First fully grasp WHAT this design is. Identify the exact main subject, the core THEME/concept (its design DNA), the art style, layout, and any personalization (names/dates/quotes). Do not propose changes yet.\n" +
-    "STEP 2 — REDESIGN: ONLY after understanding, write a redesign prompt that PRESERVES that exact core theme & subject and elevates it to top-seller Etsy quality (a refined variation — NOT a copy, NOT a different concept).\n" +
-    `PRODUCT TYPE: ${productType}.\n` +
-    (material ? `MATERIAL & SPECS: ${material}\n` : "") +
-    (guide ? `DESIGN GUIDE: ${guide}\n` : "") +
+    "STEP 1 — UNDERSTAND THE DESIGN: First fully grasp WHAT this design is. Identify the exact main subject, the core THEME/concept (its design DNA), the art style, layout, and any personalization (names/dates/quotes).\n" +
+    "STEP 2 — UNDERSTAND THE MATERIAL: Identify the physical MATERIAL & construction from the image (e.g. translucent stained glass, clear acrylic, opaque glazed ceramic, matte wood, layered wood). Pick the closest product type from this exact list:\n" +
+    `[${PRODUCT_TYPES.filter(t => t !== PRODUCT_TYPES[0]).join(" | ")}]\n` +
+    (productType && productType !== PRODUCT_TYPES[0] ? `(The user selected "${productType}" — prefer it unless the image clearly shows a different material.)\n` : "") +
+    "STEP 3 — REDESIGN: ONLY after understanding the design AND material, write a redesign prompt that PRESERVES the exact core theme & subject AND renders it in the CORRECT material (right transparency/finish/edges/light behavior), elevated to top-seller Etsy quality (a refined variation — NOT a copy, NOT a different concept).\n" +
+    (material ? `MATERIAL & SPECS (selected type): ${material}\n` : "") +
+    (guide ? `DESIGN GUIDE (selected type): ${guide}\n` : "") +
     `MARKET PRINCIPLES: ${ETSY_DESIGN_PRINCIPLES}\n` +
     `Design mode: ${designMode}. Retention target: ${retention}.\n` +
     'Return ONLY a JSON object with keys (in this order): ' +
-    '"coreTheme" (1 sentence: WHAT this design is — exact main subject + theme + art style, e.g. "A crescent-moon stained-glass suncatcher with a sitting dog silhouette over an aurora landscape, personalized with a name"), ' +
+    '"coreTheme" (1 sentence: WHAT this design is — exact main subject + theme + art style), ' +
+    '"detectedProductType" (EXACTLY one value from the list above that best matches the material seen), ' +
+    '"detectedMaterial" (1 sentence: the physical material/construction + how light/finish behaves), ' +
     '"description" (1-2 sentences expanding on the depiction), ' +
     '"detectedComponents" (string[]: 3-7 concrete elements that define this design and must be preserved), ' +
-    '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme: what to keep, what to elevate — composition, color, linework, personalization, material realism), ' +
-    '"redesignPrompt" (ONE rich English image-gen prompt that MUST begin by restating the coreTheme/subject explicitly, keep the same composition & subject, encode the material realism + niche conventions above, and end with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
+    '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme AND material), ' +
+    '"redesignPrompt" (ONE rich English image-gen prompt that MUST begin by restating the coreTheme/subject, render it in the detected MATERIAL with correct realism, keep the same composition & subject, and end with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
 
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",
@@ -95,6 +99,8 @@ export const analyzeProductDesign = async (
 
   return {
     coreTheme: raw.coreTheme || "",
+    detectedProductType: raw.detectedProductType || "",
+    detectedMaterial: raw.detectedMaterial || "",
     description: raw.description || "Premium boutique design.",
     designCritique: raw.designCritique || "Maintaining original logic.",
     detectedComponents: Array.isArray(raw.detectedComponents) && raw.detectedComponents.length

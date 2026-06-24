@@ -1,6 +1,8 @@
 
 export interface ProductAnalysis {
-  coreTheme?: string;        // Chủ đề chủ đạo: thiết kế này LÀ GÌ (subject + theme + style)
+  coreTheme?: string;            // Chủ đề chủ đạo: thiết kế này LÀ GÌ (subject + theme + style)
+  detectedProductType?: string;  // Loại SP AI nhận diện (khớp 1 trong PRODUCT_TYPES)
+  detectedMaterial?: string;     // Chất liệu/kết cấu AI nhận diện từ ảnh
   description: string;
   designCritique: string;
   redesignPrompt: string;
