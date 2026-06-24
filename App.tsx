@@ -199,7 +199,7 @@ function App() {
     if (!analysis) return;
     try {
       setStage(ProcessStage.GENERATING);
-      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, productType);
+      const redesigns = await generatePod(analysis.redesignPrompt, ropeType, selectedComponents, userNotes, productType, processedImage || originalImage || undefined);
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
       

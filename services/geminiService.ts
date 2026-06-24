@@ -18,8 +18,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const cleanupProductImage = async (imageBase64: string): Promise<string> => {
   const prompt =
-    "CRITICAL ACTION: ISOLATE SUBJECT. Remove ALL background elements, clothes, hangers, and ropes. " +
-    "Keep ONLY the product graphic. Place on 100% PURE WHITE background (#FFFFFF). High-fidelity restoration.";
+    "Extract the printable DESIGN / GRAPHIC from this photo as a CLEAN FLAT artwork. " +
+    "REMOVE completely: background, t-shirt/garment fabric, mockup, wrinkles, photo lighting, hangers, ropes, " +
+    "AND any watermark, signature or text overlay. Keep ONLY the artwork with original colors and sharp edges. " +
+    "Output on a fully TRANSPARENT background (alpha); if unavailable use 100% PURE WHITE (#FFFFFF). High-fidelity.";
   try {
     return await generateFlowImage({ prompt, aspectRatio: "1:1", referenceImage: imageBase64 });
   } catch {

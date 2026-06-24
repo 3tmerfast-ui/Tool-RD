@@ -84,13 +84,23 @@ export const PRODUCT_TYPES = [
   "Suncatcher Ornament"
 ];
 
+// Chất liệu & quy cách chuẩn (tham khảo printway.io) — tối ưu cho AI image-gen
+// để mockup redesign bám sát sản phẩm thật. Mỗi chuỗi được inject trực tiếp vào prompt.
 export const PRODUCT_MATERIALS: Record<string, string> = {
-  "1 Layer Suncatcher Ornament": "Thin transparent acrylic sheet, 3mm depth, glossy finish.",
-  "Stained Glass Suncatcher": "Translucent textured glass effect, lead soldering lines, vibrant colors.",
-  "Glass Ornament": "Hand-blown glass, spherical or flat disc, high-shine finish.",
-  "Ceramic Ornament": "Solid white ceramic, matte or glossy glaze, durable feel.",
-  "Transparent Acrylic Ornament": "Optically clear acrylic, laser-cut edges, 3mm thickness.",
-  "Custom Shape Wooden Ornament": "Natural plywood or MDF, laser-engraved details, matte wood finish.",
-  "2 Layered Piece Wooden Ornament": "Dual-layer construction, 3D depth effect, combined wood textures.",
-  "Suncatcher Ornament": "Transparent material with prismatic light-refracting properties."
+  "1 Layer Suncatcher Ornament":
+    "Single flat 3mm clear acrylic panel, glossy translucent surface with crisp polished edges that refract light; vivid single-sided UV print that glows as sunlight passes through (no white backing); top metal loop hung on a silver chain or rope.",
+  "Stained Glass Suncatcher":
+    "Round thin (2-3mm) translucent glass disc, glossy reflective surface with jewel-tone colors that glow like real stained glass when backlit; subtle glass thickness at the rim; hung at a window catching daylight, casting vivid colored light.",
+  "Glass Ornament":
+    "Flat round 6mm glass disc, glossy reflective surface with sharp specular highlights and refractive edges; slight transparency in unprinted areas; vivid permanent print; top hole fitted with a sparkling glitter-wire loop.",
+  "Ceramic Ornament":
+    "Opaque glazed ceramic (circle/heart/star/oval), smooth glossy porcelain surface with soft rounded edges and gentle specular glaze sheen; fully solid, no light transmission; vivid sublimated print; hung by a thin ribbon through a metal loop.",
+  "Transparent Acrylic Ornament":
+    "Flat ~3mm crystal-clear acrylic square, glossy see-through faces with polished light-refracting edges; transparent unprinted areas casting soft colored shadows; vivid UV print; hung by a sparkling tinsel-wire loop.",
+  "Custom Shape Wooden Ornament":
+    "Custom die-cut flat MDF/fiber-wood panel (~3-5mm), matte non-reflective printed face with exposed natural-wood color and faint grain at the cut edge; opaque vivid print; top hole with glitter-wire loop on a string.",
+  "2 Layered Piece Wooden Ornament":
+    "Two stacked fiber-wood layers bonded to 6mm total, creating raised dimensional relief with a soft drop-shadow between layers; matte printed faces, natural-wood grain on the cut edges; hung by a metal-wire loop.",
+  "Suncatcher Ornament":
+    "6mm light-catching piece with a translucent glossy acrylic center that transmits colored light (no white backing), optionally set in a matte wood frame edge; solid thickness at the rim; hung at a window by a metal loop on a chain or rope.",
 };
