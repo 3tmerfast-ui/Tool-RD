@@ -46,18 +46,21 @@ export const analyzeProductDesign = async (
   const guide = getDesignGuide(productType);
 
   const systemInstruction =
-    "You are a Master Etsy POD Designer for the US market, specialized in suncatcher & ornament products. " +
-    "Analyze the product image to plan a REDESIGN that is the SAME concept/subject/layout but elevated to top-seller Etsy quality (a refined variation, NOT a copy and NOT a different design).\n" +
+    "You are a Master Etsy POD Designer for the US market, specialized in suncatcher & ornament products.\n" +
+    "Work in this STRICT ORDER (think step by step, then output JSON):\n" +
+    "STEP 1 — UNDERSTAND: First fully grasp WHAT this design is. Identify the exact main subject, the core THEME/concept (its design DNA), the art style, layout, and any personalization (names/dates/quotes). Do not propose changes yet.\n" +
+    "STEP 2 — REDESIGN: ONLY after understanding, write a redesign prompt that PRESERVES that exact core theme & subject and elevates it to top-seller Etsy quality (a refined variation — NOT a copy, NOT a different concept).\n" +
     `PRODUCT TYPE: ${productType}.\n` +
     (material ? `MATERIAL & SPECS: ${material}\n` : "") +
     (guide ? `DESIGN GUIDE: ${guide}\n` : "") +
     `MARKET PRINCIPLES: ${ETSY_DESIGN_PRINCIPLES}\n` +
     `Design mode: ${designMode}. Retention target: ${retention}.\n` +
-    'Return ONLY a JSON object with keys: ' +
-    '"description" (1-2 sentences: what the design depicts), ' +
-    '"designCritique" (concrete Etsy redesign strategy: what to keep, what to elevate — composition, color, linework, personalization, material realism), ' +
-    '"detectedComponents" (string[]: 3-7 concrete elements to preserve), ' +
-    '"redesignPrompt" (ONE rich English image-gen prompt that keeps the same composition & subject, encodes the material realism + niche conventions above, and ends with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
+    'Return ONLY a JSON object with keys (in this order): ' +
+    '"coreTheme" (1 sentence: WHAT this design is — exact main subject + theme + art style, e.g. "A crescent-moon stained-glass suncatcher with a sitting dog silhouette over an aurora landscape, personalized with a name"), ' +
+    '"description" (1-2 sentences expanding on the depiction), ' +
+    '"detectedComponents" (string[]: 3-7 concrete elements that define this design and must be preserved), ' +
+    '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme: what to keep, what to elevate — composition, color, linework, personalization, material realism), ' +
+    '"redesignPrompt" (ONE rich English image-gen prompt that MUST begin by restating the coreTheme/subject explicitly, keep the same composition & subject, encode the material realism + niche conventions above, and end with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
 
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",
@@ -91,6 +94,7 @@ export const analyzeProductDesign = async (
   const raw = JSON.parse(cleanJsonString(json.choices?.[0]?.message?.content || "{}"));
 
   return {
+    coreTheme: raw.coreTheme || "",
     description: raw.description || "Premium boutique design.",
     designCritique: raw.designCritique || "Maintaining original logic.",
     detectedComponents: Array.isArray(raw.detectedComponents) && raw.detectedComponents.length

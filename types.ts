@@ -1,5 +1,6 @@
 
 export interface ProductAnalysis {
+  coreTheme?: string;        // Chủ đề chủ đạo: thiết kế này LÀ GÌ (subject + theme + style)
   description: string;
   designCritique: string;
   redesignPrompt: string;
