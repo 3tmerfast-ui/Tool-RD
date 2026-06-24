@@ -314,10 +314,38 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                 {isTShirtMode ? 'Thiết kế & Alpha Transparency (High Resolution Mode)' : 'Design Detail & Remix'}
             </h3>
             <div className="flex items-center space-x-3">
-              {isTShirtMode && (
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-500 transition-all">
-                      <Sparkles size={14} className="mr-1" /> Cleanup Tool
+              {!selectedMockup && (
+                <>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-500 transition-all"
+                    >
+                      {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                      <span>Tải HQ</span>
+                      <ChevronDown size={14} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showDownloadMenu && (
+                      <div className="absolute top-full right-0 mt-2 w-56 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl overflow-hidden animate-fade-in z-40">
+                        <button onClick={() => downloadDesign(false)} className="w-full flex items-center px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors border-b border-slate-700">
+                          <div className="w-4 h-4 bg-white rounded-sm mr-3" /> Nền Trắng (Mặc định)
+                        </button>
+                        <button onClick={() => downloadDesign(true)} className="w-full flex items-center px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors">
+                          <div className="w-4 h-4 bg-[linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc),linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc)] bg-[length:4px_4px] rounded-sm mr-3" /> Trong Suốt (Alpha)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleAiMockup}
+                    disabled={isMockuping}
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-500 disabled:opacity-60 transition-all"
+                    title="Ghép thiết kế vào mockup sản phẩm thật"
+                  >
+                    {isMockuping ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                    <span>{isMockuping ? 'Đang tạo...' : 'Tạo Mockup'}</span>
                   </button>
+                </>
               )}
               <button className="p-2 bg-slate-800 text-slate-400 rounded-lg hover:text-white"><RefreshCw size={16} /></button>
               <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
@@ -493,50 +521,6 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                         </div>
                     )}
                 </div>
-
-                {/* Main View Download Bar */}
-                {!selectedMockup && (
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-                        <div className="relative inline-flex items-center">
-                            <button 
-                                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                                className="flex items-center space-x-3 px-8 py-3.5 bg-indigo-600 text-white rounded-full font-bold shadow-2xl hover:bg-indigo-500 hover:scale-105 active:scale-95 transition-all"
-                            >
-                                {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                                <span>Tải về Thiết kế HQ</span>
-                                <ChevronDown size={16} className={`ml-2 transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
-                            </button>
-                            
-                            {showDownloadMenu && (
-                                <div className="absolute bottom-full left-0 right-0 mb-3 bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden animate-fade-in-up">
-                                    <button 
-                                        onClick={() => downloadDesign(false)}
-                                        className="w-full flex items-center px-6 py-4 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors border-b border-slate-700"
-                                    >
-                                        <div className="w-4 h-4 bg-white rounded-sm mr-4" />
-                                        Nền Trắng (Mặc định)
-                                    </button>
-                                    <button 
-                                        onClick={() => downloadDesign(true)}
-                                        className="w-full flex items-center px-6 py-4 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors"
-                                    >
-                                        <div className="w-4 h-4 bg-[linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc),linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc)] bg-[length:4px_4px] rounded-sm mr-4" />
-                                        Trong Suốt (Alpha)
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={handleAiMockup}
-                            disabled={isMockuping}
-                            className="ml-3 inline-flex items-center space-x-2 px-6 py-3.5 bg-purple-600 text-white rounded-full font-bold shadow-2xl hover:bg-purple-500 hover:scale-105 active:scale-95 transition-all disabled:opacity-60"
-                            title="Ghép thiết kế vào mockup sản phẩm thật (treo cửa sổ)"
-                        >
-                            {isMockuping ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                            <span>{isMockuping ? 'Đang tạo Mockup...' : 'Tạo Mockup AI'}</span>
-                        </button>
-                    </div>
-                )}
 
                 {/* AI Mockup Result Overlay */}
                 {aiMockup && (
