@@ -10,7 +10,7 @@ import { DesignAnalysisModal } from './components/DesignAnalysisModal';
 import { TshirtPromptModal } from './components/TshirtPromptModal';
 import { LoginScreen } from './components/LoginScreen'; 
 import { cleanupProductImage as cleanTshirt, analyzeProductDesign as analyzeTshirt, generateProductRedesigns as generateTshirt } from './services/geminiService';
-import { cleanupProductImage as cleanPod, analyzeProductDesign as analyzePod, generateProductRedesigns as generatePod, extractDesignElements, remixProductImage as remixPod, detectAndSplitCharacters as splitPod } from './services/geminiPodService';
+import { cleanupProductImage as cleanPod, analyzeProductDesign as analyzePod, generateProductRedesigns as generatePod, extractDesignElements, remixProductImage as remixPod, detectAndSplitCharacters as splitPod, generateProductMockup } from './services/geminiPodService';
 import { sendDataToSheet, logoutUser, getDesignsFromSheet, updateDesignInSheet, deleteDesignFromSheet, getImageBase64 } from './services/googleSheetService'; 
 import { ProductAnalysis, ProcessStage, PRODUCT_TYPES, HistoryItem, DesignMode, RopeType, AppTab, RetentionLevel } from './types';
 import { RefreshCw, Package, Shirt, LayoutGrid, LogOut, Settings, Target, Wand2, AlertTriangle } from 'lucide-react';
@@ -400,7 +400,11 @@ function App() {
           onRemix={handleRemix}
           onRemoveBackground={async () => {}}
           onSplit={handleSplit}
-          onGenerateMockup={async () => ''}
+          onGenerateMockup={async (img: string) => {
+            let src = img;
+            if (src.startsWith('http')) { try { src = await getImageBase64(src); } catch (e) {} }
+            return await generateProductMockup(src, productType);
+          }}
           isRemixing={isRemixing}
           isTShirtMode={activeTab === AppTab.TSHIRT}
         />

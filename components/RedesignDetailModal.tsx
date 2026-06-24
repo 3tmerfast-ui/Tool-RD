@@ -71,8 +71,21 @@ export const applyAlphaFilter = async (src: string): Promise<string> => {
 };
 
 export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
-  imageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
+  imageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onGenerateMockup, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
 }) => {
+  const [aiMockup, setAiMockup] = useState<string | null>(null);
+  const [isMockuping, setIsMockuping] = useState(false);
+  const handleAiMockup = async () => {
+    setIsMockuping(true);
+    try {
+      const m = await onGenerateMockup(imageUrl);
+      if (m) setAiMockup(m);
+    } catch (e) {
+      alert("Tạo mockup thất bại. Đảm bảo extension Flow đang bật.");
+    } finally {
+      setIsMockuping(false);
+    }
+  };
   const [activeSubTab, setActiveSubTab] = useState<'colors' | 'ropes' | 'parts' | 'split'>('colors');
   const [customInstruction, setCustomInstruction] = useState('');
   const [designBase64, setDesignBase64] = useState<string>('');
@@ -511,6 +524,28 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                                     </button>
                                 </div>
                             )}
+                        </div>
+                        <button
+                            onClick={handleAiMockup}
+                            disabled={isMockuping}
+                            className="ml-3 inline-flex items-center space-x-2 px-6 py-3.5 bg-purple-600 text-white rounded-full font-bold shadow-2xl hover:bg-purple-500 hover:scale-105 active:scale-95 transition-all disabled:opacity-60"
+                            title="Ghép thiết kế vào mockup sản phẩm thật (treo cửa sổ)"
+                        >
+                            {isMockuping ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                            <span>{isMockuping ? 'Đang tạo Mockup...' : 'Tạo Mockup AI'}</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* AI Mockup Result Overlay */}
+                {aiMockup && (
+                    <div className="absolute inset-0 z-30 bg-black/90 flex flex-col items-center justify-center p-6 animate-fade-in">
+                        <img src={aiMockup} alt="AI Mockup" className="max-h-[80%] max-w-full object-contain rounded-xl shadow-2xl" />
+                        <div className="flex gap-3 mt-5">
+                            <a href={aiMockup} download="mockup.png" className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-500">
+                                <Download size={18} /> Tải Mockup
+                            </a>
+                            <button onClick={() => setAiMockup(null)} className="px-6 py-3 bg-slate-700 text-white rounded-full font-bold hover:bg-slate-600">Đóng</button>
                         </div>
                     </div>
                 )}

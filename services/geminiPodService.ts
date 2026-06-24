@@ -31,53 +31,77 @@ export const analyzeProductDesign = async (
   return analyzeViaOpenRouter(imageBase64, productType, designMode, AppTab.POD, "40%");
 };
 
+// Số mẫu tạo ra (khớp nút "Generate 6 Options").
+export const NUM_REDESIGNS = 6;
+
 export const generateProductRedesigns = async (
   basePrompt: string,
   ropeType: RopeType,
-  _selectedComponents: string[],
+  selectedComponents: string[],
   userNotes: string,
   productType: string,
   referenceImage?: string
 ): Promise<string[]> => {
-  const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Hanging hardware style: ${ropeType}.` : "";
+  const ropeNote = ropeType && ropeType !== RopeType.NONE ? `Hanging hardware: ${ropeType}.` : "";
   const material = PRODUCT_MATERIALS[productType] || "";
   const materialNote = material ? `MATERIAL REALISM (${productType}): ${material}` : "";
-  const refNote = referenceImage
-    ? "Use the REFERENCE IMAGE only as loose THEME inspiration (same subject & mood). Do NOT copy it — produce a clearly different, upgraded design."
+  const keepNote = selectedComponents && selectedComponents.length
+    ? `MUST KEEP these elements (do not remove): ${selectedComponents.join(", ")}.`
     : "";
 
-  // 3 hướng sáng tạo KHÁC NHAU để ra 3 mẫu phân biệt, không trùng lặp.
+  // 6 biến thể TINH TẾ, CÙNG bố cục & phong cách — chỉ đổi màu/chi tiết, không vẽ lại sản phẩm khác.
   const VARIATIONS = [
-    "VARIATION A: richer, more luminous color palette with deeper landscape detail and elegant refined linework; the most premium boutique feel.",
-    "VARIATION B: rework the COMPOSITION (different moon orientation / subject pose angle / element placement) and add tasteful extra celestial accents (stars, glow, sparkles) while keeping the same theme.",
-    "VARIATION C: a cleaner, more modern minimalist take — bolder silhouette, more negative space and sophisticated color harmony.",
+    "Faithful premium enhancement: keep the exact same composition and style, just refine quality, sharpen details and richen colors. Closest to the original.",
+    "Warm palette variation: same layout, shift to a warmer harmonious color story (ambers, roses, golds) while keeping every element.",
+    "Cool jewel-tone variation: same layout, deep jewel tones (sapphire, emerald, amethyst) with luminous backlit glow.",
+    "Ornate variation: same layout, add tasteful extra fine detailing and a more decorative refined border.",
+    "Soft pastel elegant variation: same layout, lighter airy pastel palette with delicate linework, premium boutique feel.",
+    "Bold focal variation: same layout, stronger contrast and one clear focal highlight, crisp clean leaded lines.",
   ];
 
-  const buildPrompt = (variation: string) => `PROFESSIONAL ETSY BOUTIQUE REDESIGN — create a NEW, MORE BEAUTIFUL version (NOT a copy).
-  SAME CONCEPT & SUBJECT: ${basePrompt}.
-  REDESIGN GOAL: Keep the recognizable subject, theme and mood, but genuinely REDESIGN it — improve and CHANGE composition, color harmony, lighting and decorative details so the result looks clearly upgraded and distinct from the original. It must NOT look identical to the source.
+  const buildPrompt = (variation: string) => `HIGH-END ETSY ${productType.toUpperCase()} DESIGN — premium, salable, professional quality for the US Etsy market.
+  CONCEPT (keep faithfully): ${basePrompt}.
+  GOAL: Keep the SAME composition, subject, layout and overall style as the reference — this is a refined VARIATION of the same product, NOT a different design and NOT a plain copy. Elevate craftsmanship and polish to top-seller Etsy quality.
+  STYLE LOCK: clean symmetrical layout, crisp stained-glass / hand-painted linework, balanced floral/decor arrangement, vibrant but harmonious colors, gallery-grade finish.
   ${variation}
-  ${refNote}
-  ADJUSTMENTS: ${userNotes || "elevate to high-end boutique quality"}.
+  ${keepNote}
+  ADJUSTMENTS (user): ${userNotes || "none — just elevate quality"}.
   ${materialNote}
-  REQUIREMENTS: 8k high-fidelity, professional commercial design, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
+  OUTPUT: single centered product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
   const results: string[] = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < NUM_REDESIGNS; i++) {
     if (i > 0) await sleep(2000);
     try {
-      // referenceImage chỉ truyền cho mẫu đầu (giữ nét chủ đề); 2 mẫu sau bỏ ref để biến tấu mạnh hơn.
+      // GIỮ reference ở MỌI mẫu để khoá đúng phong cách/bố cục (gu Etsy).
       const img = await generateFlowImage({
         prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
         aspectRatio: "1:1",
-        referenceImage: i === 0 ? referenceImage : undefined,
+        referenceImage,
       });
       results.push(img);
     } catch (e) {
-      if (results.length === 0 && i === 2) throw e;
+      if (results.length === 0 && i === NUM_REDESIGNS - 1) throw e;
     }
   }
   return results;
+};
+
+/**
+ * Tạo MOCKUP sản phẩm thật từ artwork: ghép design vào bối cảnh bán hàng Etsy
+ * (vd suncatcher treo cửa sổ, ánh sáng xuyên qua). Dùng artwork làm reference.
+ */
+export const generateProductMockup = async (
+  designImage: string,
+  productType: string
+): Promise<string> => {
+  const material = PRODUCT_MATERIALS[productType] || "";
+  const prompt = `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
+  Use the REFERENCE IMAGE as the printed artwork — keep it identical, do not redraw it.
+  Material: ${material}
+  Scene: the finished product professionally hung in a bright window with soft natural daylight passing through it, cozy tasteful home interior softly blurred in the background (bokeh), gentle colored light reflections, realistic hanging cord/chain and metal loop.
+  Style: premium lifestyle e-commerce photography, sharp focus on the product, warm inviting mood, magazine quality, vertical 4:5 framing.`;
+  return generateFlowImage({ prompt, aspectRatio: "3:4", referenceImage: designImage });
 };
 
 export const extractDesignElements = async (imageBase64: string): Promise<string[]> => {
