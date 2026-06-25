@@ -177,15 +177,14 @@ export const extractDesignElements = async (imageBase64: string): Promise<string
 };
 
 export const remixProductImage = async (imageBase64: string, instruction: string): Promise<string> => {
-  try {
-    return await generateImage({
-      prompt: `Modify: ${instruction}. Keep original PILLAR layout, hand-painted textures and colors. Pure white background.`,
-      aspectRatio: "1:1",
-      referenceImage: imageBase64,
-    });
-  } catch {
-    return imageBase64;
-  }
+  // KHÔNG nuốt lỗi: để lỗi nổi lên cho UI báo (tránh tình trạng "bấm mà không chạy").
+  const out = await generateImage({
+    prompt: `Edit the reference image: ${instruction}. Keep the SAME art style, layout, colors and everything else unchanged — only apply the requested edit. Pure white background.`,
+    aspectRatio: "1:1",
+    referenceImage: imageBase64,
+  });
+  if (!out) throw new Error("Không nhận được ảnh từ engine tạo ảnh.");
+  return out;
 };
 
 export const detectAndSplitCharacters = async (_imageBase64: string): Promise<string[]> => {

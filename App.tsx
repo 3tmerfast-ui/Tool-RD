@@ -236,7 +236,10 @@ function App() {
              const finalImgForSheet = newImg.startsWith('data:') ? newImg : `data:image/png;base64,${newImg}`;
              await updateDesignInSheet(username, currentDesignId, selectedRedesignIndex, finalImgForSheet);
           }
-      } catch (e: any) { alert("Remix failed."); }
+      } catch (e: any) {
+          const msg = e?.message || String(e);
+          alert("Remix thất bại: " + msg + "\n\n(Kiểm tra extension Flow đang bật / đã đăng nhập labs.google, hoặc cấu hình Mindesk/BE.)");
+      }
       finally { setIsRemixing(false); }
   };
 
