@@ -40,6 +40,7 @@ function App() {
   const [selectedRedesignIndex, setSelectedRedesignIndex] = useState<number | null>(null);
   const [isRemixing, setIsRemixing] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false); 
+  const [prevRedesigns, setPrevRedesigns] = useState<string[] | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -223,14 +224,16 @@ function App() {
   const handleRemix = async (instruction: string) => {
       if (selectedRedesignIndex === null || !generatedRedesigns) return;
       setIsRemixing(true);
+      const snapshot = [...generatedRedesigns]; // lưu để Hoàn tác
       try {
           let currentImg = generatedRedesigns[selectedRedesignIndex];
           if (currentImg.startsWith('http')) {
               try { currentImg = await getImageBase64(currentImg); } catch (e) {}
           }
-          const newImg = await remixPod(currentImg, instruction); 
+          const newImg = await remixPod(currentImg, instruction);
           const newRedesigns = [...generatedRedesigns];
           newRedesigns[selectedRedesignIndex] = newImg;
+          setPrevRedesigns(snapshot);
           setRedesigns(newRedesigns);
           if (currentDesignId) {
              const finalImgForSheet = newImg.startsWith('data:') ? newImg : `data:image/png;base64,${newImg}`;
@@ -411,6 +414,8 @@ function App() {
           onRemix={handleRemix}
           onRemoveBackground={async () => {}}
           onSplit={handleSplit}
+          canUndo={!!prevRedesigns}
+          onUndo={() => { if (prevRedesigns) { setRedesigns(prevRedesigns); setPrevRedesigns(null); } }}
           onGenerateMockup={async (img: string, onPartial?: (imgs: string[]) => void) => {
             let src = img;
             if (src.startsWith('http')) { try { src = await getImageBase64(src); } catch (e) {} }

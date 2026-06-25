@@ -73,6 +73,7 @@ export const applyAlphaFilter = async (src: string): Promise<string> => {
 export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   imageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onGenerateMockup, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
 }) => {
+  void onRemoveBackground; void onUpdateImage;
   const [aiMockups, setAiMockups] = useState<string[]>([]);
   const [showMockups, setShowMockups] = useState(false);
   const [isMockuping, setIsMockuping] = useState(false);
@@ -322,6 +323,17 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
             <div className="flex items-center space-x-3">
               {!selectedMockup && (
                 <>
+                  {onUndo && (
+                    <button
+                      onClick={onUndo}
+                      disabled={!canUndo || isRemixing}
+                      className="flex items-center space-x-2 px-4 py-2 bg-slate-800 text-slate-200 rounded-lg text-xs font-bold hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      title="Hoàn tác chỉnh sửa gần nhất"
+                    >
+                      <RotateCcw size={14} />
+                      <span>Hoàn tác</span>
+                    </button>
+                  )}
                   <div className="relative">
                     <button
                       onClick={() => setShowDownloadMenu(!showDownloadMenu)}
@@ -638,11 +650,11 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                                         onChange={(e) => setCustomName(e.target.value)}
                                         placeholder="VD: Olivia, James & Bun..."
                                         className="flex-1 px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
-                                        onKeyDown={(e) => { if (e.key === 'Enter' && customName.trim() && !isRemixing) handleRemixAction(`Replace ONLY the personalized name text in the design with "${customName.trim()}". Keep the exact same font style, size, color and position. Do not change anything else in the design.`); }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && customName.trim() && !isRemixing) handleRemixAction(`Edit the design: change ONLY the PERSON\'S NAME text (the proper name line, usually the largest name near the bottom) to "${customName.trim()}". CRITICAL: keep ALL other text (the quote, the year, any other words), the fonts, colors, flowers, border and layout EXACTLY the same — do not remove or alter anything except that one name.`); }}
                                     />
                                     <button
                                         disabled={!customName.trim() || isRemixing}
-                                        onClick={() => handleRemixAction(`Replace ONLY the personalized name text in the design with "${customName.trim()}". Keep the exact same font style, size, color and position. Do not change anything else in the design.`)}
+                                        onClick={() => handleRemixAction(`Edit the design: change ONLY the PERSON\'S NAME text (the proper name line, usually the largest name near the bottom) to "${customName.trim()}". CRITICAL: keep ALL other text (the quote, the year, any other words), the fonts, colors, flowers, border and layout EXACTLY the same — do not remove or alter anything except that one name.`)}
                                         className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                     >
                                         {isRemixing ? <Loader2 size={14} className="animate-spin" /> : 'Áp dụng'}
