@@ -67,36 +67,50 @@ export const analyzeProductDesign = async (
     '"designCritique" (concrete Etsy redesign strategy grounded in the coreTheme AND material; explicitly state how to make it ORIGINAL: new wording for any quote, a different font, reworked layout), ' +
     '"redesignPrompt" (ONE rich English image-gen prompt that restates the coreTheme/subject, EXPLICITLY locks the styleDNA art style/line-work/palette, renders it in the detected MATERIAL, but changes content moderately: rearranged composition, varied flowers, paraphrased NEW wording, DIFFERENT font — keep only name/date placeholders. End with: "8k high-fidelity, professional commercial design, clean edges, no white die-cut border, 100% pure white (#FFFFFF) background").';
 
-  const res = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      response_format: { type: "json_object" },
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: systemInstruction },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Perform structural and aesthetic analysis. Return the JSON object as specified." },
-            { type: "image_url", image_url: { url: ensureDataUrl(imageBase64) } },
-          ],
-        },
-      ],
-    }),
+  const requestBody = JSON.stringify({
+    model: OPENROUTER_MODEL,
+    response_format: { type: "json_object" },
+    temperature: 0.4,
+    max_tokens: 1500,
+    messages: [
+      { role: "system", content: systemInstruction },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Perform structural and aesthetic analysis. Return the JSON object as specified." },
+          { type: "image_url", image_url: { url: ensureDataUrl(imageBase64) } },
+        ],
+      },
+    ],
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`OpenRouter ${res.status}: ${errText.slice(0, 200)}`);
-  }
+  // Parse chịu lỗi: thử trực tiếp, rồi strip ký tự control (newline thô trong string) gây "Unterminated string".
+  const safeParse = (content: string): any => {
+    const cleaned = cleanJsonString(content);
+    try { return JSON.parse(cleaned); } catch {}
+    try { return JSON.parse(cleaned.replace(/[\u0000-\u001F]+/g, " ")); } catch {}
+    return null;
+  };
 
-  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const raw = JSON.parse(cleanJsonString(json.choices?.[0]?.message?.content || "{}"));
+  let raw: any = null;
+  let lastErr = "";
+  for (let attempt = 0; attempt < 2 && !raw; attempt++) {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: requestBody,
+    });
+    if (!res.ok) {
+      lastErr = `OpenRouter ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`;
+      continue;
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    raw = safeParse(json.choices?.[0]?.message?.content || "{}");
+  }
+  if (!raw) {
+    if (lastErr) throw new Error(lastErr); // lỗi mạng/HTTP -> báo; còn lỗi parse -> degrade
+    raw = {}; // parse thất bại -> dùng giá trị mặc định, không crash luồng
+  }
 
   return {
     coreTheme: raw.coreTheme || "",
