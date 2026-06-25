@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown, ZoomIn } from 'lucide-react';
+import { X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown, ZoomIn, Type } from 'lucide-react';
 import { saveMockupToSheet, getMockupsFromSheet, saveFinalMockupResult, getImageBase64 } from '../services/googleSheetService';
 import { cleanupProductImage } from '../services/geminiPodService';
 import { COLOR_OPTIONS, ROPE_OPTIONS, RopeType } from '../types';
+import { TextLayerEditor } from './TextLayerEditor';
 
 interface RedesignDetailModalProps {
   imageUrl: string;
@@ -78,6 +79,7 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   const [showMockups, setShowMockups] = useState(false);
   const [isMockuping, setIsMockuping] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showTextEditor, setShowTextEditor] = useState(false);
   const MOCKUP_COUNT = 6;
   const lightboxPrev = () => setLightboxIndex((p) => (p === null ? null : (p - 1 + aiMockups.length) % aiMockups.length));
   const lightboxNext = () => setLightboxIndex((p) => (p === null ? null : (p + 1) % aiMockups.length));
@@ -362,6 +364,14 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                   >
                     {isMockuping ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
                     <span>{isMockuping ? 'Đang tạo...' : 'Tạo Mockup'}</span>
+                  </button>
+                  <button
+                    onClick={() => setShowTextEditor(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 transition-all"
+                    title="Sửa chữ bằng font thật (không AI)"
+                  >
+                    <Type size={14} />
+                    <span>Sửa chữ</span>
                   </button>
                 </>
               )}
@@ -725,6 +735,10 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
           </div>
         </div>
       </div>
+
+      {showTextEditor && (
+        <TextLayerEditor imageUrl={imageUrl} onClose={() => setShowTextEditor(false)} />
+      )}
     </div>
   );
 };
