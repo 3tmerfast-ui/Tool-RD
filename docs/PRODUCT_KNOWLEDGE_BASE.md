@@ -133,6 +133,78 @@
 - **Mockup:** treo cửa sổ nắng để acrylic glow & lộ khung gỗ; ảnh phụ treo móc tường dạng decor; thể hiện hắt màu.
 - **Prompt gợi ý:** *"6mm light-catching suncatcher, translucent jewel-tone center glowing in sunlight inside a warm matte wood frame, centered symmetrical motif, name arced inside the frame aperture, casting colored light."*
 
+### 2.9 — Oval Stained Glass Suncatcher
+- **Chất liệu/quy cách:** tấm kính mỏng **4mm** hình **oval**, bóng, trong suốt màu jewel-tone; mô phỏng kính màu có đường chì; treo cửa sổ.
+- **Niche:** botanical/floral (iris, hoa hướng dương đứng), chim (cò, hạc, đại bàng), pet memorial, celestial/moon, thiên nhiên.
+- **Người mua:** thích stained glass nhưng muốn shape khác vòng tròn; decor cửa sổ sang trọng hơn.
+- **Thiết kế:** bố cục **dọc (portrait oval)** cho chủ thể cao (hoa, chim đứng, cây); **ngang (landscape oval)** cho scene rộng (cành chim, hoa ngang); đường chì đậm đều; khung viền theo oval; motif trung tâm đối xứng.
+- **Màu:** jewel tone trong (grape, aqua, amber, rose, emerald) glow khi sáng; đường chì xám/đen đục.
+- **Personalization:** tên/quote ở banner cong dưới; thường bán dạng art thuần (không personalize cũng tốt).
+- **Kỹ thuật:** giữ ô màu trong (ít white) để glow; đường chì đủ đậm; không nhồi chi tiết nhỏ.
+- **Lỗi:** đường chì mảnh; màu đục full white mất glow; bố cục không tận dụng oval (cứ đặt motif tròn vào oval → phí shape).
+- **Mockup:** cửa sổ nắng, vệt sáng oval màu hắt lên sàn/tường; bối cảnh cửa sổ bếp/phòng ngủ.
+- **Prompt gợi ý:** *"Oval faux-stained-glass suncatcher, bold dark lead lines dividing translucent jewel-tone cells, portrait oval composition with tall centered subject (flower/bird), luminous backlit glow, decorative oval border."*
+
+### 2.10 — Rectangle Stained Glass Suncatcher
+- **Chất liệu/quy cách:** tấm kính mỏng **4mm** hình **chữ nhật**, bóng, trong suốt; mô phỏng kính màu có đường chì; hung at window.
+- **Niche:** scenic/landscape (làng tuyết, nhà ven biển, phong cảnh mùa thu, hải đăng), hoa dọc (hướng dương cao, cây lily), religious/church-window feel, cardinal memorial, cottage garden.
+- **Người mua:** muốn vẻ cửa sổ kính nhà thờ thật; decor theo theme (coastal, farmhouse, country).
+- **Thiết kế:** tận dụng format rectangle cho **scene ngang** (hoàng hôn, dãy nhà) hoặc **bố cục dọc** (lighthouse, cây thông, hoa đứng); đường chì tạo panel riêng như cửa sổ thật; khung viền hình chữ nhật.
+- **Màu:** jewel tone trong suốt glow; đường chì đậm; palette theo season/niche (thu: amber/rust, đông: xanh/bạc).
+- **Personalization:** tên/quote ở ô chữ dưới cùng; family name trên scene nhà; thường bán art thuần.
+- **Kỹ thuật:** ô màu to/sạch cho scene không quá chi tiết; chữ nhỏ nhất >5mm; đường chì đều.
+- **Lỗi:** scene quá phức tạp chi tiết → mất khi in kính; đường chì mảnh; màu xỉn không glow.
+- **Mockup:** cửa sổ nắng, ánh sáng hắt qua thành ô màu chữ nhật; góc chụp nghiêng 45° cho thấy độ sâu.
+- **Prompt gợi ý:** *"Rectangular faux-stained-glass suncatcher, bold lead lines framing scene panels, translucent jewel-tone landscape composition, warm luminous glow through window, architectural rectangular border."*
+
+### 2.11 — Heart Glass Ornament
+- **Chất liệu/quy cách:** tấm kính phẳng **6mm hình tim**, bóng đục phản chiếu, không xuyên sáng; in 1–2 mặt; lỗ ở điểm V trên đỉnh tim treo dây/ribbon.
+- **Niche:** Valentine / couple (ảnh + tên + ngày kỷ niệm), pet memorial ("Forever in My Heart", paw-in-heart), baby keepsake, mẹ/grandma, wedding/honeymoon.
+- **Người mua:** quà tình cảm mạnh — Valentine, anniversary, chia buồn; hình tim = cảm xúc tức thì.
+- **Thiết kế:** bố cục **top-heavy & đối xứng**: phần chính ở nửa trên (rộng nhất), tránh nhồi vào điểm V nhọn dưới; ảnh/motif trung tâm + tên cong trên/dưới; viền mảnh theo hình tim.
+- **Màu:** tone ấm lãng mạn (rose, burgundy, gold) hoặc memorial neutral (xanh slate, trắng bạc); tránh bảng màu lạnh nếu dùng cho Valentine.
+- **Personalization:** ảnh + tên (couple hoặc pet) + ngày; pet: tên + "Always in my heart"; baby: tên + ngày sinh.
+- **Kỹ thuật:** full white underbase cho ảnh/màu đặc chuẩn; giữ crop ảnh xa lỗ treo (top V); không cắt mặt/chủ thể bởi edge tim.
+- **Lỗi:** nhồi element xuống điểm V nhọn (trông nát); crop hỏng mặt người; palette lạnh không phù hợp Valentine.
+- **Mockup:** treo ribbon satin đỏ/hồng nền bokeh mềm; flat-lay Valentine (cánh hoa hồng, ribbon) hoặc cây thông Noel nếu niche memorial/keepsake.
+- **Prompt gợi ý:** *"Heart-shaped flat 6mm glossy glass ornament, top-heavy symmetrical composition with centered photo/motif, curved name text, warm romantic palette, sharp specular highlights on glass."*
+
+### 2.12 — Rubber-Backed Doormat
+- **Chất liệu/quy cách:** mặt vải polyester dệt (woven) + đế cao su non-slip; 2 kích cỡ: **30×18 inches** hoặc **24×16 inches**; in phẳng 2D; bề mặt vải dệt làm mờ chi tiết nhỏ.
+- **Niche:** welcome/family name ("The Smith Family"), seasonal (thu, Giáng Sinh, xuân), pet humor ("Wipe Your Paws", "Dog Hair Is a Condiment"), food/wine humor ("I Hope You Brought Wine"), farmhouse/boho decor.
+- **Người mua:** chủ nhà muốn personalize cửa vào; quà housewarming; mua theo mùa.
+- **Thiết kế:** xem như xem **từ trên nhìn xuống, cách 1–1.5m** → chữ to + bold, tương phản cao; layout ngang; tránh chi tiết nhỏ và nét mảnh (vải dệt làm nhòe); 1–2 element lớn là đủ; tên/slogan là hero.
+- **Màu:** contrast cao (đen trên kem, trắng trên navy, xanh đậm/đỏ trên trắng); palette season hoặc neutral lâu bền (không theo màu nội thất cụ thể vì doormat cần match nhiều nhà).
+- **Personalization:** họ gia đình + năm ("The Nguyens Est. 2021"); tên thú cưng; không cần nhiều option.
+- **Kỹ thuật:** sans-serif bold/display font; không serif mảnh; không gradient ảnh; line-width tối thiểu ~3–4mm để còn thấy trên vải; để margin rộng từ mép.
+- **Lỗi:** font mảnh; ảnh tả thực mịn (bị vải blur); tương phản thấp; text quá nhỏ; nhồi nhiều element rối.
+- **Mockup:** đặt trước cửa vào có bậc thềm; góc chụp từ trên hoặc ¾ để thấy toàn mat; có đôi giày cạnh để thể hiện scale.
+- **Prompt gợi ý:** *"Flat woven polyester doormat, bold high-contrast typography (thick sans-serif), horizontal layout, simple 1–2 element design, warm welcome palette, viewed from above on a front porch."*
+
+### 2.13 — Wooden Hanging Sign
+- **Chất liệu/quy cách:** tấm MDF/gỗ sợi **5mm phẳng 1 lớp**, matte, in UV màu hoặc khắc laser; mép cắt lộ vân gỗ; bất kỳ shape nào; treo qua lỗ/móc bằng dây thừng/jute.
+- **Niche:** family name welcome sign ("The Williams Family"), farmhouse decor ("Home Sweet Home", "Gather"), pet name/door sign, inspirational quotes ("She Believed She Could"), business/door welcome, housewarming gift, seasonal wall art.
+- **Người mua:** thích decor wall mộc mạc ấm; housewarming & real estate gift; quà cá nhân hoá lâu bền.
+- **Thiết kế:** **typography là hero** — 1–2 dòng text bold + accent nhỏ (ngôi sao, sprig cỏ, paw, flourish); minimal background; shape die-cut là điểm cộng (house, arrow, state, farmhouse shape); bố cục đơn giản dễ đọc từ xa.
+- **Màu:** tone gỗ tự nhiên làm nền; in màu hạn chế (1–3 màu) hoặc khắc laser đốt cháy tạo tương phản nâu/đen; đỏ + đen trên gỗ sáng = classic farmhouse; neutrals ấm.
+- **Personalization:** họ gia đình + "Est. year"; tên nhà; địa chỉ; custom quote.
+- **Kỹ thuật:** font san-serif bold hoặc display casual (tránh serif mảnh); text tối thiểu ~5mm; không chi tiết nhỏ gần mép dễ gãy; nếu khắc thì tăng tương phản; shape phải giữ đủ "body" không phần nhô mảnh.
+- **Lỗi:** text mảnh vỡ khi khắc/in MDF; shape mỏng/nhọn dễ gãy; artwork tương phản thấp chìm vào gỗ; nhồi quá nhiều text.
+- **Mockup:** treo cửa hoặc tường gạch với dây jute; ảnh flat-lay mộc (cành bạch đàn, burlap) khoe vân gỗ matte; cận thấy chữ + vân gỗ mép.
+- **Prompt gợi ý:** *"Flat 5mm matte wood hanging sign, bold typography as hero with minimal farmhouse accent, natural wood grain visible at cut edges, warm neutral palette, jute rope hanger."*
+
+### 2.14 — Clipboard
+- **Chất liệu/quy cách:** tấm acrylic trong **3mm** hình clipboard chuẩn, clip kim loại lò xo gắn đầu trên; bề mặt bóng trong suốt; in UV 1 mặt; vùng không in → trong thấy nền sau.
+- **Niche:** quà giáo viên ("Best Teacher Ever" + apple/pencil/ruler motif), student back-to-school (tên + năm học), nurse/medical (tên + stethoscope), office desk personalization (tên + chức danh), motivational quote + floral.
+- **Người mua:** mua làm quà cuối năm học cho giáo viên; quà tốt nghiệp; quà nhân viên mới; đồ văn phòng cá nhân hoá.
+- **Thiết kế:** giữ **15–20% đầu trên trống** (clip che → tránh element quan trọng ở đó); bố cục tập trung 80% diện tích dưới; negative space là bạn (acrylic trong = aesthetic "floating"); minimal + clean; tên là hero.
+- **Màu:** (a) in màu đặc với full white underbase; hoặc (b) line-art màu mực đơn (tên đen/navy/gold) để tận dụng độ trong; tránh background fill đặc kín (triệt tiêu look acrylic).
+- **Personalization:** tên + chức danh (teacher, RN); "Mrs. Johnson – 5th Grade 2026"; initials + monogram; quote ngắn.
+- **Kỹ thuật:** giữ text >5mm; không đặt element quan trọng dưới vùng clip; phần không có white = trong suốt → kiểm tra trên background trắng lẫn nền tối; không fill kín background.
+- **Lỗi:** quên vùng bị clip che; fill background đặc triệt tiêu look acrylic; text mảnh không lót trắng → vô hình; element chìm vì không đủ white underbase.
+- **Mockup:** cầm tay nền trung tính hoặc đứng trên bàn học; angle ¾ khoe clip kim loại + độ trong acrylic; bối cảnh lớp học/bàn làm việc.
+- **Prompt gợi ý:** *"Clear acrylic clipboard, minimalist centered personalization design in the lower 80% of the board, generous negative space, metal spring clip visible at top, clean transparent aesthetic on a teacher's desk."*
+
 ---
 
 ## §3. Bảng tra nhanh (cheat sheet)
@@ -141,12 +213,18 @@
 |----------|:-----------:|-----------------|----------------|--------|
 | 1 Layer Suncatcher | ✅ | ít/không (glow) | memorial, birth flower | cửa sổ nắng |
 | Stained Glass Suncatcher | ✅ | ít/không | floral, bird, memorial | cửa sổ, hắt màu |
+| Oval Stained Glass | ✅ | ít/không | botanical, bird, pet memorial | cửa sổ nắng, vệt sáng oval |
+| Rectangle Stained Glass | ✅ | ít/không | scenic/landscape, religious | cửa sổ kiểu nhà thờ |
 | Glass Ornament | ❌ (đục bóng) | full | photo keepsake, memorial | cây thông bokeh |
+| Heart Glass Ornament | ❌ (đục bóng) | full | Valentine, couple, pet memorial | ribbon satin, bokeh ấm |
 | Ceramic Ornament | ❌ | full | micro-niche, baby, pet | cây thông + flat-lay niche |
 | Transparent Acrylic | ⬜ (trong) | tuỳ phần | graduation, logo, wedding | nền sáng tối giản |
 | Custom Wood | ❌ matte | n/a (khắc) | pet, family, multi-name | mộc + ruy băng đỏ |
 | 2 Layered Wood | ❌ matte | n/a | relief cao cấp, pet, scene | đèn xiên, cận nghiêng |
 | Suncatcher Ornament | ✅ + khung | ít/không + khung | memorial, birth flower | cửa sổ + khung gỗ |
+| Rubber-Backed Doormat | ❌ (flat) | n/a | family name, seasonal, humor | thềm cửa vào, nhìn từ trên |
+| Wooden Hanging Sign | ❌ matte | n/a | family name, farmhouse, quote | treo cửa/tường, dây jute |
+| Clipboard | ⬜ (trong) | tuỳ phần | teacher gift, student, office | bàn học, cầm tay |
 
 ---
 
