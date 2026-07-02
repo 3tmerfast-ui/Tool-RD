@@ -201,7 +201,7 @@ function App() {
       setStage(ProcessStage.COMPLETE);
       setIsThemeModalOpen(false);
 
-      const res = await sendDataToSheet(redesigns, analysisResult.redesignPrompt, analysisResult.description, username, effectiveType, `Theme: ${theme}`, 'POD', designMode);
+      const res = await sendDataToSheet(redesigns, analysisResult.redesignPrompt, analysisResult.description, username, effectiveType, theme ? `Theme: ${theme}` : "Theme: (AI tự chọn)", 'POD', designMode);
       if (res.status === 'success') setCurrentDesignId(res.designId);
     } catch (err: any) {
       console.error("Theme workflow error:", err);

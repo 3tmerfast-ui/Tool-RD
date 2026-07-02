@@ -31,7 +31,7 @@ export const ThemeInputModal: React.FC<ThemeInputModalProps> = ({
   if (!isOpen) return null;
 
   const submit = () => {
-    if (!theme.trim() || isSubmitting) return;
+    if (isSubmitting) return;
     onSubmit(theme.trim());
   };
 
@@ -47,7 +47,7 @@ export const ThemeInputModal: React.FC<ThemeInputModalProps> = ({
                 <Tag className="text-indigo-500 mr-2" size={22} />
                 Chủ đề sản phẩm
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Nhập chủ đề/dịp bạn muốn tạo, AI sẽ tự động phân tích &amp; tạo thiết kế theo chủ đề này.</p>
+              <p className="text-sm text-slate-500 mt-1">Nhập chủ đề/dịp bạn muốn tạo (không bắt buộc), AI sẽ tự động phân tích &amp; tạo thiết kế. Bỏ trống nếu để AI tự quyết định.</p>
             </div>
             {!isSubmitting && (
               <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800 rounded-full">
@@ -83,7 +83,7 @@ export const ThemeInputModal: React.FC<ThemeInputModalProps> = ({
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
             disabled={isSubmitting}
             autoFocus
-            placeholder="VD: Father's Day, Coach Appreciation, Christmas gift for teacher..."
+            placeholder="VD: Father's Day, Coach Appreciation, Christmas gift for teacher... (để trống cũng được)"
             className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none shadow-inner disabled:opacity-60"
           />
 
@@ -97,7 +97,7 @@ export const ThemeInputModal: React.FC<ThemeInputModalProps> = ({
             </button>
             <button
               onClick={submit}
-              disabled={!theme.trim() || isSubmitting}
+              disabled={isSubmitting}
               className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
