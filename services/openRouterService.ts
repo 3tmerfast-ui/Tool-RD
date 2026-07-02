@@ -37,7 +37,8 @@ export const analyzeProductDesign = async (
   productType: string,
   designMode: DesignMode,
   activeTab: AppTab = AppTab.POD,
-  retention: RetentionLevel = "40%"
+  retention: RetentionLevel = "40%",
+  userTheme?: string
 ): Promise<ProductAnalysis> => {
   const apiKey = getKey();
   if (!apiKey) throw new Error("Chưa cấu hình VITE_OPENROUTER_API_KEY trong môi trường.");
@@ -55,6 +56,7 @@ export const analyzeProductDesign = async (
     "STEP 3 — REDESIGN (keep STYLE, change CONTENT moderately): The redesign MUST KEEP the EXACT same art style, line-work/leading thickness, rendering technique, delicacy and color palette as the original (do NOT switch to a different art style — e.g. do not turn a soft pastel watercolor stained-glass into a bold heavy-leaded Tiffany style). To stay ORIGINAL and avoid copyright/report on Etsy, change only the CONTENT moderately: rearrange the composition, vary the specific flowers/elements, REPHRASE any quote into fresh wording (never verbatim), and use a DIFFERENT font. Keep only name/date placeholders.\n" +
     (material ? `MATERIAL & SPECS (selected type): ${material}\n` : "") +
     (guide ? `DESIGN GUIDE (selected type): ${guide}\n` : "") +
+    (userTheme && userTheme.trim() ? `USER-REQUESTED THEME/OCCASION: "${userTheme.trim()}" — steer coreTheme, description, designCritique and especially redesignPrompt toward this theme/occasion, while still respecting the original art style/material rules above.\n` : "") +
     `MARKET PRINCIPLES: ${ETSY_DESIGN_PRINCIPLES}\n` +
     `Design mode: ${designMode}. Retention target: ${retention}.\n` +
     'Return ONLY a JSON object with keys (in this order): ' +

@@ -8,6 +8,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { RedesignDetailModal } from './components/RedesignDetailModal';
 import { DesignAnalysisModal } from './components/DesignAnalysisModal';
 import { TshirtPromptModal } from './components/TshirtPromptModal';
+import { ThemeInputModal } from './components/ThemeInputModal';
 import { LoginScreen } from './components/LoginScreen'; 
 import { cleanupProductImage as cleanTshirt, analyzeProductDesign as analyzeTshirt, generateProductRedesigns as generateTshirt } from './services/geminiService';
 import { cleanupProductImage as cleanPod, analyzeProductDesign as analyzePod, generateProductRedesigns as generatePod, extractDesignElements, remixProductImage as remixPod, detectAndSplitCharacters as splitPod, generateProductMockups } from './services/geminiPodService';
@@ -37,6 +38,8 @@ function App() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
   const [isTshirtPromptModalOpen, setIsTshirtPromptModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isThemeSubmitting, setIsThemeSubmitting] = useState(false);
   const [selectedRedesignIndex, setSelectedRedesignIndex] = useState<number | null>(null);
   const [isRemixing, setIsRemixing] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false); 
@@ -132,21 +135,10 @@ function App() {
         setStage(ProcessStage.CLEANING);
         const cleaned = await cleanPod(image);
         setProcessedImage(cleaned);
-        
-        // Cooldown 2s giữa 2 bước để không làm cháy RPM của tài khoản trả phí
-        await new Promise(r => setTimeout(r, 2000));
-        
-        setStage(ProcessStage.ANALYZING);
-        const analysisResult = await analyzePod(image, productType, designMode);
-        setAnalysis(analysisResult);
-        
-        try {
-          const frames = await extractDesignElements(image);
-          setExtractedElements(frames);
-        } catch (fErr) { console.warn("Frame extraction failed, continuing..."); }
-        
-        setStage(ProcessStage.REVIEW);
-        setIsCustomizeModalOpen(true);
+
+        // Dừng lại hỏi chủ đề/dịp sản phẩm -> tự động phân tích + tạo thiết kế theo chủ đề đó
+        setStage(ProcessStage.THEME_INPUT);
+        setIsThemeModalOpen(true);
       } else {
         setStage(ProcessStage.CLEANING);
         const cleaned = await cleanTshirt(image);
@@ -178,6 +170,45 @@ function App() {
         setError(errorMsg); 
         setStage(ProcessStage.IDLE);
       }
+    }
+  };
+
+  const handleThemeSubmit = async (theme: string) => {
+    if (!originalImage) return;
+    setIsThemeSubmitting(true);
+    try {
+      setStage(ProcessStage.ANALYZING);
+      const analysisResult = await analyzePod(originalImage, productType, designMode, theme);
+      setAnalysis(analysisResult);
+
+      try {
+        const frames = await extractDesignElements(originalImage);
+        setExtractedElements(frames);
+      } catch (fErr) { console.warn("Frame extraction failed, continuing..."); }
+
+      // Tự động tạo thiết kế luôn theo chủ đề, bỏ qua bước tuỳ chỉnh thủ công
+      setStage(ProcessStage.GENERATING);
+      setRedesigns(null);
+      const effectiveType = (productType === PRODUCT_TYPES[0] && analysisResult.detectedProductType) ? analysisResult.detectedProductType : productType;
+      const redesigns = await generatePod(analysisResult.redesignPrompt, RopeType.NONE, [], theme, effectiveType, processedImage || originalImage || undefined, (imgs) => setRedesigns([...imgs]));
+      setRedesigns(redesigns);
+      setStage(ProcessStage.COMPLETE);
+      setIsThemeModalOpen(false);
+
+      const res = await sendDataToSheet(redesigns, analysisResult.redesignPrompt, analysisResult.description, username, effectiveType, `Theme: ${theme}`, 'POD', designMode);
+      if (res.status === 'success') setCurrentDesignId(res.designId);
+    } catch (err: any) {
+      console.error("Theme workflow error:", err);
+      let errorMsg = err.message || "Lỗi hệ thống.";
+      const str = JSON.stringify(err).toLowerCase();
+      if (str.includes("quota") || str.includes("429")) {
+        errorMsg = "LỖI QUOTA: Ngay cả tài khoản TRẢ PHÍ cũng có hạn mức. Hãy vào Google Cloud Console nâng Quota 'Requests Per Minute', hoặc thêm nhiều Key vào Panel.";
+      }
+      setError(errorMsg);
+      setIsThemeModalOpen(false);
+      setStage(ProcessStage.IDLE);
+    } finally {
+      setIsThemeSubmitting(false);
     }
   };
 
@@ -283,6 +314,7 @@ function App() {
     setError(null); 
     setIsTshirtPromptModalOpen(false);
     setIsCustomizeModalOpen(false);
+    setIsThemeModalOpen(false);
   };
 
   const handleLoadHistory = (item: HistoryItem) => {
@@ -376,7 +408,6 @@ function App() {
         {stage !== ProcessStage.IDLE && originalImage && (
           <ResultsPanel
             originalImage={originalImage}
-            processedImage={processedImage}
             analysis={analysis}
             generatedRedesigns={generatedRedesigns}
             stage={stage}
@@ -395,6 +426,15 @@ function App() {
           analysis={analysis}
           extractedElements={extractedElements}
           onGenerate={handleGenerateFromModal}
+        />
+      )}
+      {isThemeModalOpen && (
+        <ThemeInputModal
+          isOpen={isThemeModalOpen}
+          onClose={() => { setIsThemeModalOpen(false); resetState(); }}
+          processedImage={processedImage}
+          isSubmitting={isThemeSubmitting}
+          onSubmit={handleThemeSubmit}
         />
       )}
       {isTshirtPromptModalOpen && analysis && (

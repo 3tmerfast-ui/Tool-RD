@@ -99,9 +99,15 @@ export const TextLayerEditor: React.FC<Props> = ({ imageUrl, onClose }) => {
     setIsOcr(true);
     try {
       const Tesseract: any = await import('tesseract.js');
-      const { data } = await Tesseract.recognize(src, 'eng');
+      const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT });
+      const { data } = await worker.recognize(src, {}, { blocks: true });
+      await worker.terminate();
       const w = natural.w || 1000, h = natural.h || 1000;
-      const lines = (data.lines || []).filter((ln: any) => (ln.text || '').trim().length > 0);
+      const lines = (data.blocks || [])
+        .flatMap((b: any) => b.paragraphs || [])
+        .flatMap((p: any) => p.lines || [])
+        .filter((ln: any) => (ln.text || '').trim().length > 0);
       const detected: TextLayer[] = lines.map((ln: any) => {
         const b = ln.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 };
         return {

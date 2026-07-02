@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { Download, Wand2, Loader2, CheckCircle2, Sparkles, Image as ImageIcon, Settings2, ZoomIn, Shirt, Scissors } from 'lucide-react';
+import { Wand2, Loader2, CheckCircle2, Sparkles, Image as ImageIcon, Settings2, ZoomIn, Shirt, Scissors } from 'lucide-react';
 import { ProductAnalysis, ProcessStage, AppTab } from '../types';
 import { getImageBase64 } from '../services/googleSheetService';
 
 interface ResultsPanelProps {
   originalImage: string;
-  processedImage: string | null;
   analysis: ProductAnalysis | null;
   generatedRedesigns: string[] | null;
   stage: ProcessStage;
@@ -16,7 +15,6 @@ interface ResultsPanelProps {
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   originalImage,
-  processedImage,
   analysis,
   generatedRedesigns,
   stage,
@@ -90,13 +88,13 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
     };
   };
 
-  const isLoading = stage !== ProcessStage.COMPLETE && stage !== ProcessStage.IDLE && stage !== ProcessStage.REVIEW;
+  const isLoading = stage !== ProcessStage.COMPLETE && stage !== ProcessStage.IDLE && stage !== ProcessStage.REVIEW && stage !== ProcessStage.THEME_INPUT;
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className={`grid ${activeTab === AppTab.TSHIRT ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-slate-400 text-sm uppercase tracking-wider">Original</h3>
@@ -105,44 +103,6 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 <img src={originalImage} alt="Original" className="w-full h-full object-contain" />
               </div>
             </div>
-
-            {activeTab !== AppTab.TSHIRT && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-indigo-400 text-sm uppercase tracking-wider flex items-center">
-                    {stage === ProcessStage.CLEANING && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                    Cleaned (Transparent)
-                  </h3>
-                  {processedImage && (
-                    <div className="flex space-x-1">
-                        <button
-                            onClick={(e) => downloadImageAs2500px(e, processedImage, 'cleaned-transparent.png', true)}
-                            className="p-1.5 bg-indigo-900/30 text-indigo-300 hover:bg-indigo-900/50 hover:text-white rounded-md transition-colors border border-indigo-500/30 flex items-center space-x-1 shadow-lg"
-                        >
-                            <Download size={14} />
-                            <span className="text-[10px] font-bold">2500px HQ</span>
-                        </button>
-                    </div>
-                  )}
-                </div>
-                <div className="relative aspect-square bg-[linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b),linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b)] bg-[length:20px_20px] bg-[position:0_0,10px_10px] bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-sm group">
-                  {processedImage ? (
-                    <img src={processedImage} alt="Processed" className="w-full h-full object-contain p-4" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 p-4 text-center">
-                      {stage === ProcessStage.CLEANING ? (
-                        <>
-                          <Loader2 className="w-8 h-8 animate-spin mb-2 text-indigo-500" />
-                          <span className="text-xs uppercase font-bold tracking-widest">Đang xử lý thiết kế...</span>
-                        </>
-                      ) : (
-                        <span className="text-xs">Waiting for processing...</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg">

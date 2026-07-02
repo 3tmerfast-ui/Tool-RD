@@ -89,8 +89,9 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
     setShowMockups(true);
     try {
       await onGenerateMockup(imageUrl, (imgs) => setAiMockups([...imgs]));
-    } catch (e) {
-      alert("Tạo mockup thất bại. Đảm bảo extension Flow đang bật.");
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      alert("Tạo mockup thất bại: " + msg + "\n\n(Kiểm tra extension Flow đang bật / đã đăng nhập labs.google, hoặc cấu hình Mindesk/BE.)");
     } finally {
       setIsMockuping(false);
     }

@@ -39,9 +39,10 @@ export const cleanupProductImage = async (imageBase64: string): Promise<string> 
 export const analyzeProductDesign = async (
   imageBase64: string,
   productType: string,
-  designMode: DesignMode
+  designMode: DesignMode,
+  userTheme?: string
 ): Promise<ProductAnalysis> => {
-  return analyzeViaOpenRouter(imageBase64, productType, designMode, AppTab.POD, "40%");
+  return analyzeViaOpenRouter(imageBase64, productType, designMode, AppTab.POD, "40%", userTheme);
 };
 
 // Số mẫu tạo ra (khớp nút "Generate 6 Options").
