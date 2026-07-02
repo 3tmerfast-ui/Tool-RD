@@ -115,7 +115,7 @@ export const generateProductRedesigns = async (
  * Tạo MOCKUP sản phẩm thật từ artwork: ghép design vào bối cảnh bán hàng Etsy
  * (vd suncatcher treo cửa sổ, ánh sáng xuyên qua). Dùng artwork làm reference.
  */
-// 6 bối cảnh mockup khác nhau để ra 6 ảnh đa dạng.
+// 6 bối cảnh mockup khác nhau để ra 6 ảnh đa dạng (đồ ornament/suncatcher).
 const MOCKUP_SCENES = [
   "hung in a bright sunlit window, daylight passing through it, cozy living room softly blurred (bokeh), colored light cast on the sill",
   "hung in a cozy bedroom window with sheer white curtains, soft morning light, warm calm mood",
@@ -125,33 +125,51 @@ const MOCKUP_SCENES = [
   "hung on a glass door/porch with a green garden visible outside, airy outdoor daylight",
 ];
 
-const buildMockupPrompt = (productType: string, material: string, scene: string) =>
-  `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
+// Bối cảnh riêng cho quần áo (T-Shirt/Jersey) — KHÔNG dùng cảnh "treo dây xích/móc" của đồ ornament.
+const APPAREL_MOCKUP_SCENES = [
+  "flat-lay on a rustic wooden table, soft natural window light, fabric with realistic natural folds/wrinkles",
+  "hanging neatly on a wooden clothing hanger against a plain light-gray studio wall",
+  "worn by a faceless/cropped model (neck-to-waist framing) standing outdoors in natural daylight",
+  "folded neatly in a stack on a white shelf, boutique retail styling",
+  "close-up hero shot on a clean neutral background showing fabric texture and print detail sharply",
+  "worn by a faceless model in an outdoor stadium/sports setting matching the jersey's theme",
+];
+
+const buildMockupPrompt = (productType: string, material: string, scene: string, isApparel: boolean) =>
+  isApparel
+    ? `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design printed on a real ${productType}.
+  Use the REFERENCE IMAGE as the printed artwork on the garment — keep the artwork IDENTICAL, do not redraw or alter the design.
+  Scene: the finished garment professionally ${scene}.
+  Style: premium apparel e-commerce photography, sharp focus on the print detail, magazine quality, SQUARE 1:1 framing, product centered.`
+    : `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
   Use the REFERENCE IMAGE as the printed artwork — keep it IDENTICAL, do not redraw or alter the design.
   Material: ${material}
   Scene: the finished product professionally ${scene}; realistic hanging cord/chain and metal loop.
   Style: premium lifestyle e-commerce photography, sharp focus on the product, magazine quality, SQUARE 1:1 framing, product centered.`;
 
 /** Tạo 1 mockup (giữ tương thích cũ). */
-export const generateProductMockup = async (designImage: string, productType: string): Promise<string> => {
+export const generateProductMockup = async (designImage: string, productType: string, isApparel: boolean = false): Promise<string> => {
   const material = PRODUCT_MATERIALS[productType] || "";
-  return generateImage({ prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[0]), aspectRatio: "1:1", referenceImage: designImage });
+  const scenes = isApparel ? APPAREL_MOCKUP_SCENES : MOCKUP_SCENES;
+  return generateImage({ prompt: buildMockupPrompt(productType, material, scenes[0], isApparel), aspectRatio: "1:1", referenceImage: designImage });
 };
 
-/** Tạo NHIỀU mockup (mặc định 6 bối cảnh khác nhau), stream từng ảnh qua onPartial. */
+/** Tạo NHIỀU mockup (mặc định 6 bối cảnh khác nhau), stream từng ảnh qua onPartial. Bối cảnh tự chọn theo loại sản phẩm (isApparel). */
 export const generateProductMockups = async (
   designImage: string,
   productType: string,
   count: number = 6,
-  onPartial?: (images: string[]) => void
+  onPartial?: (images: string[]) => void,
+  isApparel: boolean = false
 ): Promise<string[]> => {
   const material = PRODUCT_MATERIALS[productType] || "";
+  const scenes = isApparel ? APPAREL_MOCKUP_SCENES : MOCKUP_SCENES;
   const results: string[] = [];
   for (let i = 0; i < count; i++) {
     if (i > 0) await sleep(2000);
     try {
       const img = await generateImage({
-        prompt: buildMockupPrompt(productType, material, MOCKUP_SCENES[i % MOCKUP_SCENES.length]),
+        prompt: buildMockupPrompt(productType, material, scenes[i % scenes.length], isApparel),
         aspectRatio: "1:1",
         referenceImage: designImage,
       });

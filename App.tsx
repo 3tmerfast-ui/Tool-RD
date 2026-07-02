@@ -478,8 +478,11 @@ function App() {
           onGenerateMockup={async (img: string, onPartial?: (imgs: string[]) => void) => {
             let src = img;
             if (src.startsWith('http')) { try { src = await getImageBase64(src); } catch (e) {} }
-            const effectiveType = (productType === PRODUCT_TYPES[0] && analysis?.detectedProductType) ? analysis.detectedProductType : productType;
-            return await generateProductMockups(src, effectiveType, 6, onPartial);
+            const isApparel = activeTab === AppTab.TSHIRT;
+            const effectiveType = isApparel
+              ? ((tshirtStyle === TSHIRT_STYLES[0] && analysis?.detectedProductType) ? analysis.detectedProductType : tshirtStyle)
+              : ((productType === PRODUCT_TYPES[0] && analysis?.detectedProductType) ? analysis.detectedProductType : productType);
+            return await generateProductMockups(src, effectiveType, 6, onPartial, isApparel);
           }}
           isRemixing={isRemixing}
           isTShirtMode={activeTab === AppTab.TSHIRT}

@@ -52,13 +52,17 @@ export const generateProductRedesigns = async (
     "Layout B: reworked focal balance & placement, flowing script typography, warm palette.",
     "Layout C: clean modern minimalist arrangement, bold sans-serif typography, sophisticated palette.",
   ];
+  const isJersey = tshirtStyle === "Baseball Jersey";
+  const outputSpec = isJersey
+    ? "⚠️ OUTPUT FORMAT (critical, override anything above that implies a photo): a FLAT 2D print-ready TEMPLATE graphic — NOT a photograph, NOT a garment render, NOT worn by a person, NOT hung on a hook/cord/hanger, NO room/background scenery, NO fabric texture/lighting simulation. Show the FRONT flat panel and the BACK flat panel side by side within the same square frame, like a technical spec sheet, each panel as clean flat vector-style artwork on a plain white background, following the FRONT/BACK layout rules above exactly. 8k high-fidelity, sharp clean edges, ready for direct print/sublimation."
+    : "⚠️ OUTPUT FORMAT (critical, override anything above that implies a photo): a FLAT 2D print-ready graphic — NOT a photograph, NOT worn by a person, NOT a garment render, NO room/background scenery. Single centered motif on a plain white background, clean vector-style edges, 8k high-fidelity, ready for direct print.";
   const buildPrompt = (variation: string) =>
     `PROFESSIONAL ${tshirtStyle.toUpperCase()} DESIGN — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. ` +
     `CONCEPT & PURPOSE (keep niche/theme — this already locks the detected sport/team identity, keep it EXACTLY as stated, never substitute a different sport): ${baseAiPrompt}. ` +
     "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date/number placeholders. " +
     `${variation} NOTES: ${userAddition}. ` +
     `${guideNote} ` +
-    "Clean vector-style print, centered layout, transparent/pure white background, 8k high-fidelity.";
+    outputSpec;
 
   const results: string[] = [];
   for (let i = 0; i < 3; i++) {
