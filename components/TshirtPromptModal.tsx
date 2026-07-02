@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Sparkles, MessageSquare, Lightbulb, ArrowRight, Shirt, Wand2, Info } from 'lucide-react';
+import { X, Sparkles, MessageSquare, Lightbulb, ArrowRight, Shirt, Wand2, Info, Target } from 'lucide-react';
 import { ProductAnalysis } from '../types';
 
 interface TshirtPromptModalProps {
@@ -8,6 +8,7 @@ interface TshirtPromptModalProps {
   onClose: () => void;
   analysis: ProductAnalysis;
   processedImage: string | null;
+  extractedElements: string[] | null;
   onGenerate: (userPrompt: string) => void;
 }
 
@@ -16,6 +17,7 @@ export const TshirtPromptModal: React.FC<TshirtPromptModalProps> = ({
   onClose,
   analysis,
   processedImage,
+  extractedElements,
   onGenerate
 }) => {
   const [userAddition, setUserAddition] = useState('');
@@ -49,8 +51,27 @@ export const TshirtPromptModal: React.FC<TshirtPromptModalProps> = ({
              <div className="relative aspect-square w-full bg-[linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b),linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b)] bg-[length:16px_16px] bg-[position:0_0,8px_8px] rounded-2xl border border-slate-800 overflow-hidden mb-6">
                 {processedImage && <img src={processedImage} alt="Preview" className="w-full h-full object-contain p-4" />}
              </div>
-             
+
+             {analysis.detectedSport && analysis.detectedSport !== "None" && (
+               <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 bg-purple-950/30 border border-purple-800/40 rounded-full self-start">
+                 <Target size={12} className="text-purple-400" />
+                 <span className="text-[11px] font-bold text-purple-200 uppercase tracking-wide">{analysis.detectedSport}</span>
+               </div>
+             )}
+
              <div className="flex-1 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800">
+                {extractedElements && extractedElements.length > 0 && (
+                  <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center mb-2">Yếu tố tách lớp</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {extractedElements.slice(0, 3).map((img, idx) => (
+                        <div key={idx} className="aspect-square bg-[linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b),linear-gradient(45deg,#1e293b_25%,transparent_25%,transparent_75%,#1e293b_75%,#1e293b)] bg-[length:16px_16px] bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
+                          <img src={img} alt={`Extracted ${idx}`} className="w-full h-full object-contain p-1" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
                     <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center mb-2">
                         <Info size={12} className="mr-1" /> Phân tích cấu trúc

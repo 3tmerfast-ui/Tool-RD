@@ -43,3 +43,21 @@ export const PRODUCT_DESIGN_GUIDE: Record<string, string> = {
 
 export const getDesignGuide = (productType: string) =>
   PRODUCT_DESIGN_GUIDE[productType] || "";
+
+// Hướng dẫn riêng theo KIỂU ÁO T-Shirt (song song PRODUCT_DESIGN_GUIDE nhưng cho tab T-Shirt).
+export const TSHIRT_STYLE_GUIDE: Record<string, string> = {
+  "Standard T-Shirt":
+    "Standard graphic tee: ONE bold hero motif/quote as a single centered full-front print — no back layout, no jersey number/name conventions. Clean vector-style rendering, generous negative space around the motif, transparent/pure white background so it reads as a print-ready file. Best niches: quote/typography tees, pet/hobby graphics, holiday/occasion graphics.",
+  "Baseball Jersey":
+    "BASEBALL JERSEY layout — a two-sided personalization garment, follow real jersey conventions strictly:\n" +
+    "FRONT (small, secondary): EITHER a small number (~3-4in) OR a small team wordmark/logo, placed on the upper-RIGHT chest area — never centered, never large.\n" +
+    "BACK (hero, primary): if a team/player name is present, render it in ALL CAPS, ARCHED across the upper back (curved baseline, evenly kerned letters), centered directly ABOVE a LARGE number (up to ~8in tall x 4in wide), with roughly a 1-inch visual gap between the name and the number. If no name is supplied, show ONLY the large back number — this is a common, valid variant, do not force a name.\n" +
+    "TYPOGRAPHY: bold block or bold serif-slab 'varsity/collegiate' numerals ONLY (never thin script or handwritten for numbers); use the IDENTICAL numeral font on front and back.\n" +
+    "SILHOUETTE/TRIM (pick ONE cohesive variant, don't mix all): raglan or set-in short sleeves; crew neck or button-front placket; optional contrast side-panel or sleeve stripe in a secondary team color; classic pinstripe body; OR a trending gradient/ombré color-block panel; OR a distressed/vintage-wash texture.\n" +
+    "TEAM IDENTITY: derive a cohesive fictional team name/colors/mascot consistent with the DETECTED SPORT if none is specified via user notes; never invent identity that contradicts one the user explicitly supplied.\n" +
+    "OUTPUT FOCUS: if the reference/theme is back-oriented (name+number), render the BACK layout as the hero graphic; if clearly front-chest-logo-oriented, render the FRONT layout instead — match whichever the reference/theme emphasizes.\n" +
+    "Best niches: personalized team/last-name gifts, family softball leagues, bachelor(ette)/reunion team sets, kids' rec-league keepsakes. AVOID: thin script numerals, an off-center oversized front number, mismatched front/back fonts.",
+};
+
+export const getTshirtStyleGuide = (style: string) =>
+  TSHIRT_STYLE_GUIDE[style] || "";

@@ -12,6 +12,7 @@ import { ProductAnalysis, DesignMode, RopeType, AppTab, RetentionLevel } from ".
 import { generateFlowImage, pingFlowExtension } from "./flowExtensionService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
 import { cutoutBackground } from "./imageUtils";
+import { getTshirtStyleGuide } from "./productKnowledge";
 
 export const cleanJsonString = _cleanJson;
 
@@ -37,23 +38,26 @@ export const generateProductRedesigns = async (
   _ropeType: RopeType,
   _selectedComponents: string[],
   userAddition: string,
-  _productType: string,
+  tshirtStyle: string,
   _useUltraFlag: boolean,
   _activeTab: AppTab = AppTab.TSHIRT,
   originalImage?: string,
   _retention: RetentionLevel = "40%",
   onPartial?: (images: string[]) => void
 ): Promise<string[]> => {
+  const guide = getTshirtStyleGuide(tshirtStyle);
+  const guideNote = guide ? `GARMENT STYLE GUIDE (${tshirtStyle}): ${guide}` : "";
   const VARIATIONS = [
     "Layout A: original composition, elegant serif typography, refined premium linework.",
     "Layout B: reworked focal balance & placement, flowing script typography, warm palette.",
     "Layout C: clean modern minimalist arrangement, bold sans-serif typography, sophisticated palette.",
   ];
   const buildPrompt = (variation: string) =>
-    `PROFESSIONAL T-SHIRT DESIGN — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. ` +
-    `CONCEPT & PURPOSE (keep niche/theme): ${baseAiPrompt}. ` +
-    "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date placeholders. " +
+    `PROFESSIONAL ${tshirtStyle.toUpperCase()} DESIGN — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. ` +
+    `CONCEPT & PURPOSE (keep niche/theme — this already locks the detected sport/team identity, keep it EXACTLY as stated, never substitute a different sport): ${baseAiPrompt}. ` +
+    "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date/number placeholders. " +
     `${variation} NOTES: ${userAddition}. ` +
+    `${guideNote} ` +
     "Clean vector-style print, centered layout, transparent/pure white background, 8k high-fidelity.";
 
   const results: string[] = [];

@@ -2,8 +2,9 @@
 export interface ProductAnalysis {
   coreTheme?: string;            // Chủ đề chủ đạo: thiết kế này LÀ GÌ (subject + theme + style)
   styleDNA?: string;             // Cách thể hiện: kỹ thuật vẽ, đường nét/leading, rendering, palette
-  detectedProductType?: string;  // Loại SP AI nhận diện (khớp 1 trong PRODUCT_TYPES)
+  detectedProductType?: string;  // Loại SP AI nhận diện — POD: khớp PRODUCT_TYPES; T-Shirt: khớp TSHIRT_STYLES
   detectedMaterial?: string;     // Chất liệu/kết cấu AI nhận diện từ ảnh
+  detectedSport?: string;        // Môn thể thao/đội/màu/linh vật/số áo AI nhận diện (chỉ tab T-Shirt); redesign PHẢI khoá đúng môn này
   description: string;
   designCritique: string;
   redesignPrompt: string;
@@ -93,6 +94,12 @@ export const PRODUCT_TYPES = [
   "Rubber-Backed Doormat",
   "Wooden Hanging Sign",
   "Clipboard",
+];
+
+// Kiểu áo T-Shirt (song song PRODUCT_TYPES nhưng KHÔNG dùng chung — 2 hệ SP không liên quan nhau).
+export const TSHIRT_STYLES = [
+  "Standard T-Shirt",
+  "Baseball Jersey",
 ];
 
 // Chất liệu & quy cách chuẩn (tham khảo printway.io) — tối ưu cho AI image-gen

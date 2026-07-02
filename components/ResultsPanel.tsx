@@ -174,6 +174,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                       <p className="text-sm text-amber-200/90 leading-relaxed p-3 bg-amber-950/20 border border-amber-900/40 rounded-lg">{analysis.styleDNA}</p>
                     </div>
                   )}
+                  {activeTab === AppTab.TSHIRT && analysis.detectedSport && analysis.detectedSport !== "None" && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wider">🏅 Sport/Team DNA (khoá cố định)</h4>
+                      <p className="text-sm text-purple-200/90 leading-relaxed p-3 bg-purple-950/20 border border-purple-900/40 rounded-lg">{analysis.detectedSport}</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phân tích gốc</h4>
                     <p className="text-sm text-slate-300 leading-relaxed">{analysis.description}</p>

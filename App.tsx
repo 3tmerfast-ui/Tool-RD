@@ -10,10 +10,10 @@ import { DesignAnalysisModal } from './components/DesignAnalysisModal';
 import { TshirtPromptModal } from './components/TshirtPromptModal';
 import { ThemeInputModal } from './components/ThemeInputModal';
 import { LoginScreen } from './components/LoginScreen'; 
-import { cleanupProductImage as cleanTshirt, analyzeProductDesign as analyzeTshirt, generateProductRedesigns as generateTshirt } from './services/geminiService';
+import { cleanupProductImage as cleanTshirt, analyzeProductDesign as analyzeTshirt, generateProductRedesigns as generateTshirt, extractDesignElements as extractTshirtElements } from './services/geminiService';
 import { cleanupProductImage as cleanPod, analyzeProductDesign as analyzePod, generateProductRedesigns as generatePod, extractDesignElements, remixProductImage as remixPod, detectAndSplitCharacters as splitPod, generateProductMockups } from './services/geminiPodService';
-import { sendDataToSheet, logoutUser, getDesignsFromSheet, updateDesignInSheet, deleteDesignFromSheet, getImageBase64 } from './services/googleSheetService'; 
-import { ProductAnalysis, ProcessStage, PRODUCT_TYPES, HistoryItem, DesignMode, RopeType, AppTab, RetentionLevel } from './types';
+import { sendDataToSheet, logoutUser, getDesignsFromSheet, updateDesignInSheet, deleteDesignFromSheet, getImageBase64 } from './services/googleSheetService';
+import { ProductAnalysis, ProcessStage, PRODUCT_TYPES, TSHIRT_STYLES, HistoryItem, DesignMode, RopeType, AppTab, RetentionLevel } from './types';
 import { RefreshCw, Package, Shirt, LayoutGrid, LogOut, Settings, Target, Wand2, AlertTriangle } from 'lucide-react';
 
 function App() {
@@ -31,6 +31,7 @@ function App() {
   const [stage, setStage] = useState<ProcessStage>(ProcessStage.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [productType, setProductType] = useState<string>(PRODUCT_TYPES[0]);
+  const [tshirtStyle, setTshirtStyle] = useState<string>(TSHIRT_STYLES[0]);
   const [designMode, setDesignMode] = useState<DesignMode>(DesignMode.NEW_CONCEPT);
   const [retention, setRetention] = useState<RetentionLevel>('40%');
   const [currentDesignId, setCurrentDesignId] = useState<string | null>(null);
@@ -146,10 +147,15 @@ function App() {
         
         await new Promise(r => setTimeout(r, 2000));
         
-        setStage(ProcessStage.ANALYZING); 
-        const analysisResult = await analyzeTshirt(image, "T-Shirt", designMode, AppTab.TSHIRT, retention);
+        setStage(ProcessStage.ANALYZING);
+        const analysisResult = await analyzeTshirt(image, tshirtStyle, designMode, AppTab.TSHIRT, retention);
         setAnalysis(analysisResult);
-        
+
+        try {
+          const frames = await extractTshirtElements(image);
+          setExtractedElements(frames);
+        } catch (fErr) { console.warn("T-Shirt frame extraction failed, continuing..."); }
+
         setStage(ProcessStage.REVIEW);
         setIsTshirtPromptModalOpen(true);
       }
@@ -218,12 +224,13 @@ function App() {
     try {
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
-      const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, "T-Shirt", false, AppTab.TSHIRT, originalImage, retention, (imgs) => setRedesigns([...imgs]));
+      const effectiveTshirtStyle = (tshirtStyle === TSHIRT_STYLES[0] && analysis.detectedProductType) ? analysis.detectedProductType : tshirtStyle;
+      const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, effectiveTshirtStyle, false, AppTab.TSHIRT, originalImage, retention, (imgs) => setRedesigns([...imgs]));
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
-      
+
       const combinedPromptForLog = `Base: ${analysis.redesignPrompt} | User Suggestion: ${userAddition}`;
-      const res = await sendDataToSheet(redesigns, combinedPromptForLog, analysis.description, username, "T-Shirt", `Retention: ${retention}`, 'TSHIRT', designMode);
+      const res = await sendDataToSheet(redesigns, combinedPromptForLog, analysis.description, username, effectiveTshirtStyle, `Retention: ${retention}`, 'TSHIRT', designMode);
       if (res.status === 'success') setCurrentDesignId(res.designId);
     } catch (err: any) {
       setError(err.message || "Lỗi tạo mẫu T-Shirt.");
@@ -364,16 +371,24 @@ function App() {
               <h2 className={`text-3xl font-bold bg-clip-text text-transparent mb-2 ${activeTab === AppTab.TSHIRT ? 'bg-gradient-to-r from-purple-400 to-pink-400' : 'bg-gradient-to-r from-indigo-400 to-teal-400'}`}>
                  {activeTab === AppTab.TSHIRT ? "Professional T-Shirt Designer" : "POD Product Reimagination"}
               </h2>
-              <div className={`grid grid-cols-1 ${activeTab === AppTab.TSHIRT ? 'max-w-md' : 'md:grid-cols-2 max-w-2xl'} gap-4 mx-auto bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg text-left`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 max-w-2xl gap-4 mx-auto bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg text-left">
                  {activeTab === AppTab.TSHIRT ? (
-                    <div className="flex flex-col">
-                      <label className="text-xs font-bold text-slate-400 uppercase mb-2">Aesthetic Retention</label>
-                      <div className="flex bg-slate-950 rounded-lg p-1 border border-slate-800">
-                          {['20%', '40%', '60%', '80%'].map((l) => (
-                            <button key={l} onClick={() => setRetention(l as RetentionLevel)} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold ${retention === l ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{l}</button>
-                          ))}
+                    <>
+                      <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center"><Shirt size={12} className="mr-1" /> Garment Style</label>
+                        <select value={tshirtStyle} onChange={(e) => setTshirtStyle(e.target.value)} className="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg p-2 outline-none h-[42px]">
+                          {TSHIRT_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                       </div>
-                    </div>
+                      <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-400 uppercase mb-2">Aesthetic Retention</label>
+                        <div className="flex bg-slate-950 rounded-lg p-1 border border-slate-800 h-[42px]">
+                            {['20%', '40%', '60%', '80%'].map((l) => (
+                              <button key={l} onClick={() => setRetention(l as RetentionLevel)} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold ${retention === l ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{l}</button>
+                            ))}
+                        </div>
+                      </div>
+                    </>
                  ) : (
                     <>
                       <div className="flex flex-col">
@@ -438,11 +453,12 @@ function App() {
         />
       )}
       {isTshirtPromptModalOpen && analysis && (
-        <TshirtPromptModal 
+        <TshirtPromptModal
           isOpen={isTshirtPromptModalOpen}
           onClose={() => setIsTshirtPromptModalOpen(false)}
           analysis={analysis}
           processedImage={processedImage}
+          extractedElements={extractedElements}
           onGenerate={handleTshirtGenerate}
         />
       )}
