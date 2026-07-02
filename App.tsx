@@ -222,6 +222,7 @@ function App() {
     setIsTshirtPromptModalOpen(false);
     if (!analysis || !originalImage) return;
     try {
+      setError(null);
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
       const effectiveTshirtStyle = (tshirtStyle === TSHIRT_STYLES[0] && analysis.detectedProductType) ? analysis.detectedProductType : tshirtStyle;
@@ -243,6 +244,7 @@ function App() {
     setIsCustomizeModalOpen(false);
     if (!analysis) return;
     try {
+      setError(null);
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
       const effectiveType = (productType === PRODUCT_TYPES[0] && analysis.detectedProductType) ? analysis.detectedProductType : productType;
@@ -408,16 +410,17 @@ function App() {
                  )}
               </div>
               <FileUpload onFileSelect={processFile} />
-              {error && (
-                <div className="max-w-2xl mx-auto mt-4 p-4 bg-red-900/20 border border-red-500/50 rounded-xl text-red-200 text-sm flex items-start">
-                   <AlertTriangle className="mr-3 flex-shrink-0 mt-0.5" size={18} />
-                   <div className="flex-1">
-                      <p className="font-bold mb-1">Cảnh báo hệ thống (Dành cho tài khoản Trả phí)</p>
-                      <p className="text-xs opacity-90">{error}</p>
-                   </div>
-                </div>
-              )}
            </div>
+        )}
+
+        {error && (
+          <div className="max-w-2xl mx-auto mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-xl text-red-200 text-sm flex items-start">
+             <AlertTriangle className="mr-3 flex-shrink-0 mt-0.5" size={18} />
+             <div className="flex-1">
+                <p className="font-bold mb-1">Cảnh báo hệ thống (Dành cho tài khoản Trả phí)</p>
+                <p className="text-xs opacity-90">{error}</p>
+             </div>
+          </div>
         )}
 
         {stage !== ProcessStage.IDLE && originalImage && (
