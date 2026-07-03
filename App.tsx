@@ -28,6 +28,7 @@ function App() {
   const [extractedElements, setExtractedElements] = useState<string[] | null>(null);
   const [analysis, setAnalysis] = useState<ProductAnalysis | null>(null);
   const [generatedRedesigns, setRedesigns] = useState<string[] | null>(null);
+  const [generatedBacks, setGeneratedBacks] = useState<string[] | null>(null);
   const [stage, setStage] = useState<ProcessStage>(ProcessStage.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [productType, setProductType] = useState<string>(PRODUCT_TYPES[0]);
@@ -115,7 +116,7 @@ function App() {
 
   const processFile = (file: File) => {
     setStage(ProcessStage.UPLOADING);
-    setError(null); setProcessedImage(null); setAnalysis(null); setRedesigns(null); setExtractedElements(null);
+    setError(null); setProcessedImage(null); setAnalysis(null); setRedesigns(null); setGeneratedBacks(null); setExtractedElements(null);
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
@@ -128,6 +129,7 @@ function App() {
   const startWorkflow = async (image: string) => {
     // Reset MỌI kết quả cũ để không hiển thị thiết kế của sản phẩm trước.
     setRedesigns(null);
+    setGeneratedBacks(null);
     setCurrentDesignId(null);
     setExtractedElements(null);
     setSelectedRedesignIndex(null);
@@ -225,13 +227,15 @@ function App() {
       setError(null);
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
+      setGeneratedBacks(null);
       const effectiveTshirtStyle = (tshirtStyle === TSHIRT_STYLES[0] && analysis.detectedProductType) ? analysis.detectedProductType : tshirtStyle;
-      const redesigns = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, effectiveTshirtStyle, false, AppTab.TSHIRT, originalImage, retention, (imgs) => setRedesigns([...imgs]));
-      setRedesigns(redesigns);
+      const { fronts, backs } = await generateTshirt(analysis.redesignPrompt, RopeType.NONE, [], userAddition, effectiveTshirtStyle, false, AppTab.TSHIRT, originalImage, retention, (imgs) => setRedesigns([...imgs]));
+      setRedesigns(fronts);
+      setGeneratedBacks(backs);
       setStage(ProcessStage.COMPLETE);
 
       const combinedPromptForLog = `Base: ${analysis.redesignPrompt} | User Suggestion: ${userAddition}`;
-      const res = await sendDataToSheet(redesigns, combinedPromptForLog, analysis.description, username, effectiveTshirtStyle, `Retention: ${retention}`, 'TSHIRT', designMode);
+      const res = await sendDataToSheet(fronts, combinedPromptForLog, analysis.description, username, effectiveTshirtStyle, `Retention: ${retention}`, 'TSHIRT', designMode);
       if (res.status === 'success') setCurrentDesignId(res.designId);
     } catch (err: any) {
       setError(err.message || "Lỗi tạo mẫu T-Shirt.");
@@ -316,9 +320,10 @@ function App() {
   const resetState = () => { 
     setStage(ProcessStage.IDLE); 
     setOriginalImage(null); 
-    setProcessedImage(null); 
-    setRedesigns(null); 
-    setAnalysis(null); 
+    setProcessedImage(null);
+    setRedesigns(null);
+    setGeneratedBacks(null);
+    setAnalysis(null);
     setExtractedElements(null); 
     setError(null); 
     setIsTshirtPromptModalOpen(false);
@@ -331,6 +336,7 @@ function App() {
     setProcessedImage(item.processedImage);
     setAnalysis(item.analysis);
     setRedesigns(item.generatedRedesigns);
+    setGeneratedBacks(null); // lịch sử chưa lưu mặt sau riêng của jersey
     setProductType(item.productType);
     setDesignMode(item.designMode || DesignMode.NEW_CONCEPT);
     setActiveTab(item.tab || AppTab.POD);
@@ -470,6 +476,7 @@ function App() {
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
           imageUrl={generatedRedesigns[selectedRedesignIndex]}
+          backImageUrl={generatedBacks?.[selectedRedesignIndex]}
           onRemix={handleRemix}
           onRemoveBackground={async () => {}}
           onSplit={handleSplit}

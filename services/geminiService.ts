@@ -44,7 +44,7 @@ export const generateProductRedesigns = async (
   originalImage?: string,
   _retention: RetentionLevel = "40%",
   onPartial?: (images: string[]) => void
-): Promise<string[]> => {
+): Promise<{ fronts: string[]; backs: string[] | null }> => {
   const guide = getTshirtStyleGuide(tshirtStyle);
   const guideNote = guide ? `GARMENT STYLE GUIDE (${tshirtStyle}): ${guide}` : "";
   const VARIATIONS = [
@@ -53,33 +53,62 @@ export const generateProductRedesigns = async (
     "Layout C: clean modern minimalist arrangement, bold sans-serif typography, sophisticated palette.",
   ];
   const isJersey = tshirtStyle === "Baseball Jersey";
-  const outputSpec = isJersey
-    ? "⚠️ OUTPUT FORMAT (critical, override anything above that implies a photo): a FLAT 2D print-ready TEMPLATE graphic — NOT a photograph, NOT a garment render, NOT worn by a person, NOT hung on a hook/cord/hanger, NO room/background scenery, NO fabric texture/lighting simulation. Show the FRONT flat panel and the BACK flat panel side by side within the same square frame, like a technical spec sheet, each panel as clean flat vector-style artwork on a plain white background, following the FRONT/BACK layout rules above exactly. 8k high-fidelity, sharp clean edges, ready for direct print/sublimation."
-    : "⚠️ OUTPUT FORMAT (critical, override anything above that implies a photo): a FLAT 2D print-ready graphic — NOT a photograph, NOT worn by a person, NOT a garment render, NO room/background scenery. Single centered motif on a plain white background, clean vector-style edges, 8k high-fidelity, ready for direct print.";
-  const buildPrompt = (variation: string) =>
+  const originalityNote =
+    "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date/number placeholders. ";
+  const conceptNote =
+    `CONCEPT & PURPOSE (keep niche/theme — this already locks the detected sport/team identity, keep it EXACTLY as stated, never substitute a different sport): ${baseAiPrompt}. `;
+
+  // Standard T-Shirt: 1 ảnh/variation như cũ, không có mặt sau riêng.
+  const buildStandardPrompt = (variation: string) =>
     `PROFESSIONAL ${tshirtStyle.toUpperCase()} DESIGN — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. ` +
-    `CONCEPT & PURPOSE (keep niche/theme — this already locks the detected sport/team identity, keep it EXACTLY as stated, never substitute a different sport): ${baseAiPrompt}. ` +
-    "⚠️ ORIGINALITY (avoid copyright/report): do NOT reproduce any source's exact wording, font or layout. REPHRASE any quote into fresh original wording (same sentiment), use a DIFFERENT font, and REWORK the composition so it is clearly distinct. Keep only name/date/number placeholders. " +
+    conceptNote +
+    originalityNote +
     `${variation} NOTES: ${userAddition}. ` +
     `${guideNote} ` +
-    outputSpec;
+    "⚠️ OUTPUT FORMAT (critical, override anything above that implies a photo): a FLAT 2D print-ready graphic — NOT a photograph, NOT worn by a person, NOT a garment render, NO room/background scenery. Single centered motif on a plain white background, clean vector-style edges, 8k high-fidelity, ready for direct print.";
 
-  const results: string[] = [];
+  // Baseball Jersey: sinh RIÊNG 2 file in — front.png (đồ hoạ mặt trước, tách rời)
+  // và back.png (chữ+số mặt sau) — không vẽ hình dáng áo bao quanh, đúng chuẩn file gửi xưởng in.
+  const buildJerseyFrontPrompt = (variation: string) =>
+    "PROFESSIONAL BASEBALL JERSEY — FRONT PRINT FILE — ORIGINAL artwork inspired by the concept, NOT a copy of any existing listing. " +
+    conceptNote +
+    originalityNote +
+    `${variation} NOTES: ${userAddition}. ` +
+    `${guideNote} ` +
+    "⚠️ OUTPUT FORMAT (critical): produce ONLY the FRONT-side print graphic, isolated on a plain white background — NOT the full garment shape, NO sleeves/collar drawn around it, NOT a photo, NOT worn by a person. Ready-to-print FRONT FILE only: the mascot/logo/graphic on ONE side and the vertical team-name text (if any) on the OTHER side per the BUTTON PLACKET RULE above, with the center strip left completely empty. 8k high-fidelity, clean vector edges, ready for direct print.";
+
+  const buildJerseyBackPrompt = (variation: string) =>
+    "PROFESSIONAL BASEBALL JERSEY — BACK PRINT FILE — companion back-side file for the same design, SAME art style/colors as the front. " +
+    conceptNote +
+    originalityNote +
+    `${variation} NOTES: ${userAddition}. ` +
+    `${guideNote} ` +
+    "⚠️ OUTPUT FORMAT (critical): produce ONLY the BACK-side print graphic, isolated on a plain white background — NOT the full garment shape, NO sleeves/collar drawn around it, NOT a photo. Ready-to-print BACK FILE only: ALL-CAPS name arched above a large number, centered, per the layout rules above. 8k high-fidelity, clean vector edges, ready for direct print.";
+
+  const fronts: string[] = [];
+  const backs: string[] = [];
   for (let i = 0; i < 3; i++) {
     if (i > 0) await sleep(1500);
     try {
       // KHÔNG truyền reference -> tránh copy y nguyên chữ/font/bố cục.
-      const img = await generateFlowImage({
-        prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
-        aspectRatio: "1:1",
+      const variation = VARIATIONS[i] || VARIATIONS[0];
+      const front = await generateFlowImage({
+        prompt: isJersey ? buildJerseyFrontPrompt(variation) : buildStandardPrompt(variation),
+        aspectRatio: isJersey ? "3:4" : "1:1",
       });
-      results.push(img);
-      onPartial?.([...results]);
+      fronts.push(front);
+      onPartial?.([...fronts]);
+
+      if (isJersey) {
+        await sleep(1000);
+        const back = await generateFlowImage({ prompt: buildJerseyBackPrompt(variation), aspectRatio: "3:4" });
+        backs.push(back);
+      }
     } catch (e) {
-      if (results.length === 0 && i === 2) throw e; // không tạo được ảnh nào -> báo lỗi
+      if (fronts.length === 0 && i === 2) throw e; // không tạo được ảnh nào -> báo lỗi
     }
   }
-  return results;
+  return { fronts, backs: isJersey ? backs : null };
 };
 
 export const validateToken = async (_tokenInput?: string): Promise<boolean> => {

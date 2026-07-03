@@ -8,6 +8,7 @@ import { TextLayerEditor } from './TextLayerEditor';
 
 interface RedesignDetailModalProps {
   imageUrl: string;
+  backImageUrl?: string;
   isOpen: boolean;
   onClose: () => void;
   onRemix: (instruction: string) => Promise<void>;
@@ -72,7 +73,7 @@ export const applyAlphaFilter = async (src: string): Promise<string> => {
 };
 
 export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
-  imageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onGenerateMockup, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
+  imageUrl, backImageUrl, isOpen, onClose, onRemix, onRemoveBackground, onSplit, onGenerateMockup, onUpdateImage, isRemixing, onUndo, canUndo, isTShirtMode
 }) => {
   void onRemoveBackground; void onUpdateImage;
   const [aiMockups, setAiMockups] = useState<string[]>([]);
@@ -101,6 +102,7 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
   const [customName, setCustomName] = useState('');
   const [designBase64, setDesignBase64] = useState<string>('');
   const [transparentDesign, setTransparentDesign] = useState<string | null>(null);
+  const [transparentDesignBack, setTransparentDesignBack] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSavingResult, setIsSavingResult] = useState(false);
   const [storeGroups, setStoreGroups] = useState<StoreGroup[]>([]);
@@ -125,12 +127,18 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
             handlePrepareTransparent();
         }
     }
-  }, [isOpen, imageUrl, isTShirtMode]);
+  }, [isOpen, imageUrl, backImageUrl, isTShirtMode]);
 
   const handlePrepareTransparent = async () => {
       setIsProcessing(true);
       const res = await applyAlphaFilter(imageUrl);
       setTransparentDesign(res);
+      if (backImageUrl) {
+          const backRes = await applyAlphaFilter(backImageUrl);
+          setTransparentDesignBack(backRes);
+      } else {
+          setTransparentDesignBack(null);
+      }
       setIsProcessing(false);
   };
 
@@ -159,17 +167,15 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
     } finally { setIsProcessing(false); }
   };
 
-  const downloadDesign = async (transparent: boolean) => {
-    setIsDownloading(true);
-    setShowDownloadMenu(false);
-    try {
-        let source = imageUrl;
-        if (imageUrl.startsWith('http')) {
-            try { source = await getImageBase64(imageUrl); } catch (e) {}
-        }
-        const cleanedImageOnWhite = isTShirtMode ? source : await cleanupProductImage(source);
-        const finalSrc = transparent ? await applyAlphaFilter(cleanedImageOnWhite) : cleanedImageOnWhite;
-        
+  const downloadSingleDesign = async (src: string, transparent: boolean, filename: string): Promise<void> => {
+    let source = src;
+    if (src.startsWith('http')) {
+        try { source = await getImageBase64(src); } catch (e) {}
+    }
+    const cleanedImageOnWhite = isTShirtMode ? source : await cleanupProductImage(source);
+    const finalSrc = transparent ? await applyAlphaFilter(cleanedImageOnWhite) : cleanedImageOnWhite;
+
+    await new Promise<void>((resolve) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = finalSrc;
@@ -177,20 +183,37 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
             const canvas = document.createElement('canvas');
             canvas.width = 2500; canvas.height = 2500;
             const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+            if (!ctx) { resolve(); return; }
             if (!transparent) { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, 2500, 2500); }
             const scale = Math.min(2500 / img.width, 2500 / img.height);
             const w = img.width * scale; const h = img.height * scale;
             ctx.drawImage(img, (2500 - w) / 2, (2500 - h) / 2, w, h);
             const link = document.createElement('a');
             link.href = canvas.toDataURL('image/png', 1.0);
-            link.download = transparent ? 'design-transparent.png' : 'design-hq.png';
+            link.download = filename;
             link.click();
-            setIsDownloading(false);
+            resolve();
         };
+        img.onerror = () => resolve();
+    });
+  };
+
+  const downloadDesign = async (transparent: boolean) => {
+    setIsDownloading(true);
+    setShowDownloadMenu(false);
+    try {
+        const suffix = transparent ? 'transparent' : 'hq';
+        if (backImageUrl) {
+            await downloadSingleDesign(imageUrl, transparent, `design-front-${suffix}.png`);
+            await new Promise((r) => setTimeout(r, 300)); // tránh trình duyệt chặn tải nhiều file liên tiếp
+            await downloadSingleDesign(backImageUrl, transparent, `design-back-${suffix}.png`);
+        } else {
+            await downloadSingleDesign(imageUrl, transparent, `design-${suffix}.png`);
+        }
     } catch (error) {
-        setIsDownloading(false);
         alert("Lỗi tải xuống.");
+    } finally {
+        setIsDownloading(false);
     }
   };
 
@@ -354,6 +377,9 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                         <button onClick={() => downloadDesign(true)} className="w-full flex items-center px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors">
                           <div className="w-4 h-4 bg-[linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc),linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc)] bg-[length:4px_4px] rounded-sm mr-3" /> Trong Suốt (Alpha)
                         </button>
+                        {backImageUrl && (
+                          <div className="px-5 py-2 text-[10px] text-slate-500 bg-slate-900/50 border-t border-slate-700">Tải 2 file: mặt trước + mặt sau</div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -395,12 +421,33 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                         </div>
                     ) : (
                         <div className="relative group">
-                            <img 
-                                src={isTShirtMode ? (transparentDesign || imageUrl) : imageUrl} 
-                                alt="Main Design" 
-                                className="max-w-full max-h-[72vh] object-contain drop-shadow-2xl" 
-                            />
-                            
+                            {backImageUrl ? (
+                                <div className="flex items-center gap-6">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mặt trước</span>
+                                        <img
+                                            src={isTShirtMode ? (transparentDesign || imageUrl) : imageUrl}
+                                            alt="Front Design"
+                                            className="max-w-full max-h-[64vh] object-contain drop-shadow-2xl"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mặt sau</span>
+                                        <img
+                                            src={isTShirtMode ? (transparentDesignBack || backImageUrl) : backImageUrl}
+                                            alt="Back Design"
+                                            className="max-w-full max-h-[64vh] object-contain drop-shadow-2xl"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <img
+                                    src={isTShirtMode ? (transparentDesign || imageUrl) : imageUrl}
+                                    alt="Main Design"
+                                    className="max-w-full max-h-[72vh] object-contain drop-shadow-2xl"
+                                />
+                            )}
+
                             {/* OVERLAY: Mockup Preview Display */}
                             {selectedMockup && (
                                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#020617] animate-fade-in p-6">

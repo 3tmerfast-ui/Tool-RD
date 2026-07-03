@@ -135,22 +135,53 @@ const APPAREL_MOCKUP_SCENES = [
   "worn by a faceless model in an outdoor stadium/sports setting matching the jersey's theme",
 ];
 
-const buildMockupPrompt = (productType: string, material: string, scene: string, isApparel: boolean) =>
-  isApparel
-    ? `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design printed on a real ${productType}.
+// Bối cảnh riêng cho các sản phẩm KHÔNG treo (để trên bàn/cầm tay/trải sàn) — khác hẳn
+// ornament/suncatcher (luôn treo cửa sổ/móc). Sản phẩm không có mặt trong map này vẫn dùng MOCKUP_SCENES như cũ.
+const DESK_MOCKUP_SCENES: Record<string, string[]> = {
+  "Clipboard": [
+    "held flat in one hand at a slight angle, soft bright indoor light catching the clear acrylic edge with a visible glossy highlight",
+    "propped upright on a wooden desk beside a small potted plant and pen cup, soft natural window light, the clear side edge clearly visible and reflecting light",
+    "lying flat on a light wood desk surface among scattered pens and sticky notes, overhead soft light showing the glossy transparent edge",
+    "a close-up angled hero shot on a clean neutral background, sharp focus on both the printed design and the glossy see-through acrylic edge",
+    "propped against a small stack of books on a bright office desk, morning light highlighting the clear edge",
+    "held up at eye level by a hand against a softly blurred classroom background, clear acrylic edge catching a bright highlight",
+  ],
+  "Rubber-Backed Doormat": [
+    "laid flat on a front porch step, front door and welcome mat area visible, natural daylight, viewed from above at a slight angle",
+    "laid flat at an entryway floor next to a pair of shoes, warm indoor/outdoor transition lighting",
+    "laid flat outside a front door with potted plants beside it, bright daylight, top-down angled view",
+    "close-up hero shot of the mat texture and print detail on a clean neutral background",
+    "laid flat on a porch with autumn leaves scattered nearby, seasonal styling",
+    "laid flat at a back patio door entrance, natural bright daylight, slight perspective angle",
+  ],
+};
+
+const buildMockupPrompt = (productType: string, material: string, scene: string, isApparel: boolean) => {
+  if (isApparel) {
+    return `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design printed on a real ${productType}.
   Use the REFERENCE IMAGE as the printed artwork on the garment — keep the artwork IDENTICAL, do not redraw or alter the design.
   Scene: the finished garment professionally ${scene}.
-  Style: premium apparel e-commerce photography, sharp focus on the print detail, magazine quality, SQUARE 1:1 framing, product centered.`
-    : `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
+  Style: premium apparel e-commerce photography, sharp focus on the print detail, magazine quality, SQUARE 1:1 framing, product centered.`;
+  }
+  const isDeskStyle = !!DESK_MOCKUP_SCENES[productType];
+  const hangingClause = isDeskStyle ? "" : " realistic hanging cord/chain and metal loop;";
+  const edgeClause = /clear|transparent|acrylic/i.test(material)
+    ? " Render a clearly visible glossy, light-catching transparent edge/rim along the material's physical border, even where the printed design is dense — this visible edge is essential to show it is genuine clear acrylic, not opaque plastic."
+    : "";
+  return `Create a PHOTOREALISTIC ETSY PRODUCT MOCKUP of this exact design as a real ${productType}.
   Use the REFERENCE IMAGE as the printed artwork — keep it IDENTICAL, do not redraw or alter the design.
-  Material: ${material}
-  Scene: the finished product professionally ${scene}; realistic hanging cord/chain and metal loop.
+  Material: ${material}${edgeClause}
+  Scene: the finished product professionally ${scene};${hangingClause}
   Style: premium lifestyle e-commerce photography, sharp focus on the product, magazine quality, SQUARE 1:1 framing, product centered.`;
+};
+
+const scenesFor = (productType: string, isApparel: boolean): string[] =>
+  isApparel ? APPAREL_MOCKUP_SCENES : (DESK_MOCKUP_SCENES[productType] || MOCKUP_SCENES);
 
 /** Tạo 1 mockup (giữ tương thích cũ). */
 export const generateProductMockup = async (designImage: string, productType: string, isApparel: boolean = false): Promise<string> => {
   const material = PRODUCT_MATERIALS[productType] || "";
-  const scenes = isApparel ? APPAREL_MOCKUP_SCENES : MOCKUP_SCENES;
+  const scenes = scenesFor(productType, isApparel);
   return generateImage({ prompt: buildMockupPrompt(productType, material, scenes[0], isApparel), aspectRatio: "1:1", referenceImage: designImage });
 };
 
@@ -163,7 +194,7 @@ export const generateProductMockups = async (
   isApparel: boolean = false
 ): Promise<string[]> => {
   const material = PRODUCT_MATERIALS[productType] || "";
-  const scenes = isApparel ? APPAREL_MOCKUP_SCENES : MOCKUP_SCENES;
+  const scenes = scenesFor(productType, isApparel);
   const results: string[] = [];
   for (let i = 0; i < count; i++) {
     if (i > 0) await sleep(2000);
