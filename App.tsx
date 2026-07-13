@@ -197,11 +197,11 @@ function App() {
       // Tự động tạo thiết kế luôn theo chủ đề, bỏ qua bước tuỳ chỉnh thủ công
       setStage(ProcessStage.GENERATING);
       setRedesigns(null);
+      setIsThemeModalOpen(false); // Đóng modal ngay khi bắt đầu tạo để xem từng thiết kế hiện dần, không phải đợi tất cả xong
       const effectiveType = (productType === PRODUCT_TYPES[0] && analysisResult.detectedProductType) ? analysisResult.detectedProductType : productType;
       const redesigns = await generatePod(analysisResult.redesignPrompt, RopeType.NONE, [], theme, effectiveType, processedImage || originalImage || undefined, (imgs) => setRedesigns([...imgs]));
       setRedesigns(redesigns);
       setStage(ProcessStage.COMPLETE);
-      setIsThemeModalOpen(false);
 
       const res = await sendDataToSheet(redesigns, analysisResult.redesignPrompt, analysisResult.description, username, effectiveType, theme ? `Theme: ${theme}` : "Theme: (AI tự chọn)", 'POD', designMode);
       if (res.status === 'success') setCurrentDesignId(res.designId);
