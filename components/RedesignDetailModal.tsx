@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown, ZoomIn, Type } from 'lucide-react';
+import { Film, X, Download, RefreshCw, Palette, Sparkles, Wand2, MessageSquare, Eraser, Scissors, Image as ImageIcon, RotateCcw, Hand, Save, Move, Maximize, CheckCircle2, Loader2, Copy, Trash2, Layers, LayoutGrid, Zap, Sliders, Monitor, ChevronDown, ChevronLeft, ChevronRight, FileDown, ZoomIn, Type } from 'lucide-react';
 import { saveMockupToSheet, getMockupsFromSheet, saveFinalMockupResult, getImageBase64 } from '../services/googleSheetService';
-import { cleanupProductImage } from '../services/geminiPodService';
+import { cleanupProductImage, generateProductVideo } from '../services/geminiPodService';
+import { getImageProvider } from '../services/imageEngine';
 import { COLOR_OPTIONS, ROPE_OPTIONS, RopeType } from '../types';
 import { TextLayerEditor } from './TextLayerEditor';
 
@@ -95,6 +96,24 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
       alert("Tạo mockup thất bại: " + msg + "\n\n(Kiểm tra extension Flow đang bật / đã đăng nhập labs.google, hoặc cấu hình Mindesk/BE.)");
     } finally {
       setIsMockuping(false);
+    }
+  };
+  // Video quảng cáo (chỉ khi engine = MuseAI on-prem)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
+  const [isVideoing, setIsVideoing] = useState(false);
+  const canMakeVideo = getImageProvider() === 'muse';
+  const handleMakeVideo = async () => {
+    setIsVideoing(true);
+    setVideoUrl(null);
+    setShowVideo(true);
+    try {
+      setVideoUrl(await generateProductVideo(aiMockups[0] || imageUrl));
+    } catch (e: any) {
+      setShowVideo(false);
+      alert("Tạo video thất bại: " + (e?.message || String(e)) + "\n\n(Kiểm tra Tailscale / MuseAI bridge on-prem đang chạy.)");
+    } finally {
+      setIsVideoing(false);
     }
   };
   const [activeSubTab, setActiveSubTab] = useState<'colors' | 'ropes' | 'parts' | 'split'>('colors');
@@ -392,6 +411,17 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                     {isMockuping ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
                     <span>{isMockuping ? 'Đang tạo...' : 'Tạo Mockup'}</span>
                   </button>
+                  {canMakeVideo && (
+                    <button
+                      onClick={handleMakeVideo}
+                      disabled={isVideoing}
+                      className="flex items-center space-x-2 px-4 py-2 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-500 disabled:opacity-60 transition-all"
+                      title="Tạo video quảng cáo 5s qua MuseAI (dùng mockup đầu tiên nếu đã có)"
+                    >
+                      {isVideoing ? <Loader2 size={14} className="animate-spin" /> : <Film size={14} />}
+                      <span>{isVideoing ? 'Đang tạo video...' : 'Tạo Video'}</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowTextEditor(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 transition-all"
@@ -632,6 +662,32 @@ export const RedesignDetailModal: React.FC<RedesignDetailModalProps> = ({
                                     return null;
                                 })}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Video quảng cáo (MuseAI) */}
+                {showVideo && (
+                    <div className="absolute inset-0 z-30 bg-slate-950 flex flex-col animate-fade-in">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0f172a]">
+                            <h4 className="text-sm font-bold text-slate-100 flex items-center">
+                                <Film size={16} className="mr-2 text-rose-400" />
+                                Video quảng cáo
+                                {isVideoing && <span className="ml-3 flex items-center text-xs font-normal text-slate-400"><Loader2 size={14} className="animate-spin mr-2 text-rose-400" />MuseAI đang render (1–5 phút)...</span>}
+                            </h4>
+                            <div className="flex items-center gap-2">
+                                {videoUrl && (
+                                    <a href={videoUrl} download="product-video.mp4" className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-500">
+                                        <Download size={14} /> Tải video
+                                    </a>
+                                )}
+                                <button onClick={() => setShowVideo(false)} className="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700">Đóng</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center p-6">
+                            {videoUrl
+                                ? <video src={videoUrl} controls autoPlay loop className="max-h-full max-w-full rounded-xl shadow-2xl" />
+                                : <div className="w-full max-w-xl aspect-video rounded-xl bg-slate-900 border border-slate-800 animate-pulse flex items-center justify-center"><Film className="text-slate-700 w-10 h-10" /></div>}
                         </div>
                     </div>
                 )}

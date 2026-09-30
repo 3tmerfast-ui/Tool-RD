@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        // MuseAI Bridge on-prem chưa bật CORS -> đi qua proxy cùng origin.
+        proxy: {
+          '/muse': {
+            target: env.MUSE_API_URL || 'http://100.126.145.3:8770',
+            changeOrigin: true,
+            rewrite: (p) => p.replace(/^\/muse/, ''),
+          },
+        },
       },
       plugins: [react()],
       define: {

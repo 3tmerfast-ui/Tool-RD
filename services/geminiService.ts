@@ -9,14 +9,14 @@
  */
 
 import { ProductAnalysis, DesignMode, RopeType, AppTab, RetentionLevel } from "../types";
-import { generateFlowImage, pingFlowExtension } from "./flowExtensionService";
+import { pingFlowExtension } from "./flowExtensionService";
+import { generateImage, generateImages, getImageProvider } from "./imageEngine";
+import { pingMuse } from "./museService";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
 import { cutoutBackground } from "./imageUtils";
 import { getTshirtStyleGuide } from "./productKnowledge";
 
 export const cleanJsonString = _cleanJson;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const cleanupProductImage = async (imageBase64: string): Promise<string> => {
   // CẮT NỀN THẬT trên ảnh gốc: giữ nguyên 100% chi tiết, chỉ xoá phông nền -> PNG trong suốt.
@@ -85,33 +85,40 @@ export const generateProductRedesigns = async (
     `${guideNote} ` +
     "⚠️ OUTPUT FORMAT (critical): produce ONLY the BACK-side print graphic, isolated on a plain white background — NOT the full garment shape, NO sleeves/collar drawn around it, NOT a photo. Ready-to-print BACK FILE only: ALL-CAPS name arched above a large number, centered, per the layout rules above. 8k high-fidelity, clean vector edges, ready for direct print.";
 
+  // KHÔNG truyền reference -> tránh copy y nguyên chữ/font/bố cục.
+  // Jersey: xếp front/back xen kẽ [f0,b0,f1,b1,...]. MuseAI chạy song song cả lô; engine khác tuần tự.
+  const requests = VARIATIONS.flatMap((variation) => isJersey
+    ? [
+        { prompt: buildJerseyFrontPrompt(variation), aspectRatio: "3:4" },
+        { prompt: buildJerseyBackPrompt(variation), aspectRatio: "3:4" },
+      ]
+    : [{ prompt: buildStandardPrompt(variation), aspectRatio: "1:1" }]);
+  const step = isJersey ? 2 : 1;
+
+  const partial: string[] = [];
+  const all = await generateImages(
+    requests,
+    (i, img) => { if (i % step === 0) { partial.push(img); onPartial?.([...partial]); } },
+    1500,
+  );
+
+  // Giữ back khớp index với front (back lỗi -> "" để modal bỏ qua mặt sau).
   const fronts: string[] = [];
   const backs: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    if (i > 0) await sleep(1500);
-    try {
-      // KHÔNG truyền reference -> tránh copy y nguyên chữ/font/bố cục.
-      const variation = VARIATIONS[i] || VARIATIONS[0];
-      const front = await generateFlowImage({
-        prompt: isJersey ? buildJerseyFrontPrompt(variation) : buildStandardPrompt(variation),
-        aspectRatio: isJersey ? "3:4" : "1:1",
-      });
-      fronts.push(front);
-      onPartial?.([...fronts]);
-
-      if (isJersey) {
-        await sleep(1000);
-        const back = await generateFlowImage({ prompt: buildJerseyBackPrompt(variation), aspectRatio: "3:4" });
-        backs.push(back);
-      }
-    } catch (e) {
-      if (fronts.length === 0 && i === 2) throw e; // không tạo được ảnh nào -> báo lỗi
-    }
+  for (let i = 0; i < all.length; i += step) {
+    if (!all[i]) continue;
+    fronts.push(all[i]!);
+    if (isJersey) backs.push(all[i + 1] || "");
   }
+  if (!fronts.length) throw new Error("Không tạo được mẫu thiết kế nào.");
   return { fronts, backs: isJersey ? backs : null };
 };
 
 export const validateToken = async (_tokenInput?: string): Promise<boolean> => {
+  if (getImageProvider() === "muse") {
+    if (!(await pingMuse())) throw new Error("Không kết nối được MuseAI on-prem. Kiểm tra Tailscale và bridge (MUSE_API_URL).");
+    return true;
+  }
   const ok = await pingFlowExtension();
   if (!ok) throw new Error("Không kết nối được Flow extension. Cài & bật extension, đăng nhập labs.google rồi thử lại.");
   return true;
@@ -119,7 +126,7 @@ export const validateToken = async (_tokenInput?: string): Promise<boolean> => {
 
 export const extractDesignElements = async (imageBase64: string): Promise<string[]> => {
   try {
-    const img = await generateFlowImage({
+    const img = await generateImage({
       prompt: "Isolate the subject on a pure white background. Maintain original colors and details.",
       aspectRatio: "1:1",
       referenceImage: imageBase64,
@@ -132,7 +139,7 @@ export const extractDesignElements = async (imageBase64: string): Promise<string
 
 export const remixProductImage = async (imageBase64: string, instruction: string): Promise<string> => {
   try {
-    return await generateFlowImage({
+    return await generateImage({
       prompt: `Edit the reference image as follows: ${instruction}. Keep product on pure white background, high-fidelity.`,
       aspectRatio: "1:1",
       referenceImage: imageBase64,

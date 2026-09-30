@@ -92,6 +92,18 @@ thiết kế và ảnh.
   (description / designCritique / detectedComponents / redesignPrompt).
 - `detectAndSplitCharacters` (POD) hiện trả mảng rỗng (chưa dùng).
 
+### Chọn engine tạo ảnh / video (`imageEngine.ts`)
+- 3 engine: **Flow** (extension), **Mindesk** (Book BE queue), **MuseAI** (bridge on-prem
+  Windows 3090, `http://100.126.145.3:8770` qua Tailscale).
+- Chọn trên Header (lưu `localStorage('image_provider')`), mặc định lấy `VITE_IMAGE_PROVIDER`,
+  không có thì Mindesk nếu đã cấu hình, ngược lại Flow.
+- `generateImages()`: MuseAI gửi cả lô (6 redesign / 6 mockup / 3–6 ảnh T-shirt) trong 1
+  `/v1/batch/async` → bridge chạy **song song** (`VITE_MUSE_CONCURRENCY`, 1–5, mặc định 3),
+  item lỗi 503/busy tự retry 1 lần; engine khác vẫn chạy tuần tự như cũ.
+- **Video** (nút "Tạo Video" trong RedesignDetailModal) chỉ có khi engine = MuseAI.
+- `museService.ts` gọi qua proxy `/muse` của Vite (bridge chưa bật CORS; target
+  `MUSE_API_URL`) → chỉ dùng được khi chạy app trên máy trong Tailnet, không chạy trên Vercel.
+
 ### `flowExtensionService.ts` (client của extension)
 - Tự phát hiện **extension ID** qua beacon `__flowExtBeacon` mà content script
   bơm lên trang; cache vào `localStorage('flow_ext_id')`.

@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { Camera, Sparkles, History, Rocket } from 'lucide-react';
+import React, { useState } from 'react';
+import { Camera, Sparkles, History, Rocket, Cpu } from 'lucide-react';
+import { IMAGE_PROVIDERS, ImageProvider, getImageProvider, setImageProvider } from '../services/imageEngine';
 
 interface HeaderProps {
   onHistoryClick: () => void;
@@ -8,6 +9,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onHistoryClick, useUltra }) => {
+  const [provider, setProvider] = useState<ImageProvider>(getImageProvider);
+  const changeProvider = (p: ImageProvider) => { setImageProvider(p); setProvider(p); };
   return (
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -25,6 +28,16 @@ export const Header: React.FC<HeaderProps> = ({ onHistoryClick, useUltra }) => {
           )}
         </div>
         <div className="flex items-center space-x-4">
+          <label className="flex items-center space-x-1 text-sm text-slate-400" title="Engine tạo ảnh / video">
+            <Cpu className="w-4 h-4" />
+            <select
+              value={provider}
+              onChange={(e) => changeProvider(e.target.value as ImageProvider)}
+              className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              {IMAGE_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </label>
           <button 
             onClick={onHistoryClick}
             className="flex items-center space-x-2 text-sm font-medium text-slate-400 hover:text-indigo-400 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"

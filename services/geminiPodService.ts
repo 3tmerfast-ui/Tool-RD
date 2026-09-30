@@ -9,26 +9,12 @@
  */
 
 import { ProductAnalysis, DesignMode, RopeType, AppTab, PRODUCT_MATERIALS } from "../types";
-import { generateFlowImage } from "./flowExtensionService";
-import { generateMindeskImage, isMindeskConfigured } from "./mindeskService";
+import { generateImage, generateImages, generateVideo } from "./imageEngine";
 import { analyzeProductDesign as analyzeViaOpenRouter, cleanJsonString as _cleanJson } from "./openRouterService";
 import { cutoutBackground } from "./imageUtils";
 import { getDesignGuide } from "./productKnowledge";
 
-/** Sinh ảnh qua MindeskAPI (on-prem) hoặc Flow extension tuỳ cấu hình. */
-const generateImage = (opts: {
-  prompt: string;
-  aspectRatio?: string;
-  referenceImage?: string;
-  model?: string;
-}): Promise<string> =>
-  isMindeskConfigured()
-    ? generateMindeskImage(opts)
-    : generateFlowImage(opts);
-
 export const cleanJsonString = _cleanJson;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const cleanupProductImage = async (imageBase64: string): Promise<string> => {
   // CẮT NỀN THẬT trên ảnh gốc: giữ nguyên 100% chi tiết (móc treo, chữ, design),
@@ -92,23 +78,18 @@ export const generateProductRedesigns = async (
   ${guideNote}
   OUTPUT: single centered product design, 8k high-fidelity, clean edges, NO white die-cut border, 100% PURE WHITE (#FFFFFF) background. ${ropeNote}`;
 
+  // GIỮ reference image làm STYLE ANCHOR -> bám đúng đường nét/phong cách vẽ; nội dung đổi qua prompt.
+  // MuseAI: 6 mẫu chạy song song; engine khác: tuần tự như cũ.
   const results: string[] = [];
-  for (let i = 0; i < NUM_REDESIGNS; i++) {
-    if (i > 0) await sleep(2000);
-    try {
-      // GIỮ reference image làm STYLE ANCHOR -> bám đúng đường nét/phong cách vẽ; nội dung đổi qua prompt.
-      const img = await generateImage({
-        prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
-        aspectRatio: "1:1",
-        referenceImage,
-      });
-      results.push(img);
-      onPartial?.([...results]); // hiện ngay mẫu vừa xong
-    } catch (e) {
-      if (results.length === 0 && i === NUM_REDESIGNS - 1) throw e;
-    }
-  }
-  return results;
+  const all = await generateImages(
+    Array.from({ length: NUM_REDESIGNS }, (_, i) => ({
+      prompt: buildPrompt(VARIATIONS[i] || VARIATIONS[0]),
+      aspectRatio: "1:1",
+      referenceImage,
+    })),
+    (_i, img) => { results.push(img); onPartial?.([...results]); }, // hiện ngay mẫu vừa xong
+  );
+  return all.filter((x): x is string => !!x);
 };
 
 /**
@@ -196,21 +177,26 @@ export const generateProductMockups = async (
   const material = PRODUCT_MATERIALS[productType] || "";
   const scenes = scenesFor(productType, isApparel);
   const results: string[] = [];
-  for (let i = 0; i < count; i++) {
-    if (i > 0) await sleep(2000);
-    try {
-      const img = await generateImage({
-        prompt: buildMockupPrompt(productType, material, scenes[i % scenes.length], isApparel),
-        aspectRatio: "1:1",
-        referenceImage: designImage,
-      });
-      results.push(img);
-      onPartial?.([...results]);
-    } catch (e) {
-      if (results.length === 0 && i === count - 1) throw e;
-    }
-  }
-  return results;
+  const all = await generateImages(
+    Array.from({ length: count }, (_, i) => ({
+      prompt: buildMockupPrompt(productType, material, scenes[i % scenes.length], isApparel),
+      aspectRatio: "1:1",
+      referenceImage: designImage,
+    })),
+    (_i, img) => { results.push(img); onPartial?.([...results]); },
+  );
+  return all.filter((x): x is string => !!x);
+};
+
+/** Tạo VIDEO quảng cáo ngắn từ ảnh thiết kế/mockup (qua MuseAI on-prem). Trả blob URL MP4. */
+export const generateProductVideo = async (image: string, productType?: string): Promise<string> => {
+  const product = productType ? `sản phẩm ${productType}` : "sản phẩm";
+  return generateVideo(
+    `Tạo video quảng cáo 5s cho ${product} trong ảnh đính kèm: camera chuyển động chậm, mượt quanh sản phẩm, ` +
+    `ánh sáng studio mềm, bối cảnh lifestyle sang trọng kiểu Etsy. GIỮ NGUYÊN 100% thiết kế/hoạ tiết in trên sản phẩm, ` +
+    `không vẽ lại, không thêm chữ. Không lồng tiếng.`,
+    image,
+  );
 };
 
 export const extractDesignElements = async (imageBase64: string): Promise<string[]> => {
