@@ -9,8 +9,8 @@
  * nên cả lô 3–6 ảnh chạy 1 lần thay vì tuần tự từng ảnh như Flow.
  * Item lỗi 503 / "service busy" được tự retry 1 lần sau 30s.
  *
- * Bridge chưa bật CORS → frontend gọi qua proxy `/muse` của Vite (xem vite.config.ts,
- * target = MUSE_API_URL). Chỉ chạy được khi máy chạy app nằm trong Tailnet.
+ * Dev: gọi qua proxy `/muse` của Vite (vite.config.ts, target = MUSE_API_URL, cần Tailnet).
+ * Vercel: VITE_MUSE_BASE_URL = URL Tailscale Funnel (:8443) + VITE_MUSE_API_KEY (bridge bật CORS).
  *
  * Config (.env.local):
  *   MUSE_API_URL=http://100.126.145.3:8770   # target của proxy (dev server)
@@ -29,6 +29,8 @@ const POLL_INTERVAL_MS = 3_000;
 const IMAGE_TIMEOUT_MS = 180_000;
 const VIDEO_TIMEOUT_MS = 300_000;
 const BUSY_RETRY_DELAY_MS = 30_000;
+
+import { getImageBase64 } from './googleSheetService';
 
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -55,12 +57,26 @@ export async function pingMuse(): Promise<boolean> {
   }
 }
 
+/**
+ * Bridge public (Funnel) chỉ nhận data: URL → ảnh http (vd link Drive trong lịch sử)
+ * đổi sang dataURL qua proxy Apps Script trước khi gửi.
+ */
+async function toDataUrl(ref: string): Promise<string> {
+  if (ref.startsWith('data:')) return ref;
+  const b64 = await getImageBase64(ref);
+  return b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
+}
+
 async function submitBatch(items: MuseItem[], timeoutMs: number): Promise<string> {
+  const payload = await Promise.all(items.map(async it => ({
+    prompt: it.prompt,
+    files: it.referenceImage ? [await toDataUrl(it.referenceImage)] : [],
+  })));
   const res = await fetch(`${BASE_URL}/v1/batch/async`, {
     method: 'POST',
     headers: headers(true),
     body: JSON.stringify({
-      items: items.map(it => ({ prompt: it.prompt, files: it.referenceImage ? [it.referenceImage] : [] })),
+      items: payload,
       concurrency: Math.min(CONCURRENCY, items.length),
       timeout_ms: timeoutMs,
     }),

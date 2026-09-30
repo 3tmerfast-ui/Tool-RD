@@ -67,7 +67,7 @@ không phải sửa — mọi tạo ảnh bên trong phải đi qua `imageEngine
 |---|---|---|---|---|---|
 | Flow extension | `flow` | ✅ | ❌ | ❌ tuần tự (nghỉ 1.5–2s) | Chrome + extension + đăng nhập labs.google |
 | Mindesk (Book BE) | `mindesk` | ✅ | ❌ | ❌ tuần tự | `VITE_BOOK_BE_URL` + `VITE_BOOK_AUTH_TOKEN` |
-| MuseAI on-prem | `muse` | ✅ | ✅ | ✅ batch | Máy chạy app trong Tailnet + `npm run dev` |
+| MuseAI on-prem | `muse` | ✅ | ✅ | ✅ batch | Dev: proxy `/muse` (Tailnet). Vercel: Tailscale Funnel `:8443` + API key |
 
 Thứ tự chọn engine (`getImageProvider()`):
 1. `localStorage('image_provider')` — dropdown trên Header, lưu theo từng máy/trình duyệt.
@@ -105,11 +105,27 @@ viết vòng `for` gọi `generateImage` — nếu không sẽ mất tính năng
   tỉ lệ khung hình X" — tỉ lệ khung chỉ là gợi ý trong prompt, không phải tham số cứng.
 - Bridge trả `/media/*` với `application/octet-stream` → `fetchMedia` gắn lại MIME theo đuôi
   file (webp/png/jpg/mp4…). Đừng bỏ bước này, `<img>` với dataURL octet-stream sẽ lỗi.
-- **CORS**: bridge chưa bật CORS → frontend gọi `/muse/*`, Vite dev proxy chuyển tới
-  `MUSE_API_URL` (xem `vite.config.ts`). Hệ quả: MuseAI **chỉ chạy khi `npm run dev` trên máy
-  trong Tailnet**; bản Vercel (`tool-rd.vercel.app`, HTTPS) không gọi được. Muốn dùng trên
-  Vercel phải bật CORS + HTTPS phía bridge (trong `../MuseAI`), rồi đặt `VITE_MUSE_BASE_URL`
-  = URL đầy đủ.
+- **Hai cách gọi bridge**:
+  - **Dev** (`npm run dev`, máy trong Tailnet): `VITE_MUSE_BASE_URL` để trống → gọi `/muse/*`,
+    Vite proxy chuyển tới `MUSE_API_URL` (xem `vite.config.ts`).
+  - **Vercel** (`tool-rd.vercel.app`): bridge public qua **Tailscale Funnel** tại
+    `https://desktop-bpavqpt.tail476398.ts.net:8443` (443 đã dùng cho Storyling). Env Production
+    trên Vercel đã đặt `VITE_MUSE_BASE_URL` + `VITE_MUSE_API_KEY` (đổi env → phải redeploy).
+- **Bảo vệ phía bridge** (`../MuseAI/bridge/server.py`, `security_middleware`) với request đi
+  qua Funnel (header `Tailscale-Funnel-Request`):
+  - Chỉ cho `GET /v1/status`, `POST /v1/batch/async`, `GET /v1/batch/status?id=`, `GET /media/<file>`;
+    mọi endpoint khác (vd `/v1/eval`) → 403.
+  - Bắt buộc `X-API-Key` = `MUSE_API_KEY` (trong `../MuseAI/.env`); bridge chưa có key → chặn hết.
+  - `files` trong batch **chỉ nhận `data:` URL** (chặn đọc file local / SSRF) → `toDataUrl`
+    trong `museService.ts` đổi ảnh http (link Drive) sang dataURL qua proxy Apps Script trước khi gửi.
+  - CORS chỉ cho origin trong `MUSE_CORS_ORIGINS` (mặc định `https://tool-rd.vercel.app,http://localhost:3000`).
+  - Truy cập trong Tailnet/local (`100.126.145.3:8770`) không bị ràng buộc gì.
+  - `bridge/pool.py` (multi-account) **chưa** có middleware này — đừng Funnel nó.
+- Bật Funnel trên máy Windows (Admin): `powershell -ExecutionPolicy Bypass -File deploy\windows\enable_funnel.ps1`
+  trong `D:\MuseAI` — tạo key nếu thiếu, bật `tailscale funnel --bg --https=8443`, restart task
+  `MuseAI_Bridge`. `run_daemon.ps1` nạp `.env` vào môi trường trước khi chạy bridge.
+- API key nằm trong bundle frontend (giống OpenRouter key) — tool nội bộ; lộ key thì đổi trong
+  `../MuseAI/.env` + Vercel env rồi redeploy.
 - `MUSE_API_KEY` bật phía bridge → đặt `VITE_MUSE_API_KEY` (gửi header `X-API-Key`).
 
 Test tay nhanh (không cần UI):
@@ -128,8 +144,8 @@ curl -s "http://100.126.145.3:8770/v1/batch/status?id=<batch_id>"
 | `VITE_BOOK_BE_URL`, `VITE_BOOK_AUTH_TOKEN` | Engine Mindesk |
 | `VITE_IMAGE_PROVIDER` | Engine mặc định: `flow` / `mindesk` / `muse` |
 | `MUSE_API_URL` | Target proxy `/muse` (mặc định `http://100.126.145.3:8770`) — không có `VITE_`, chỉ dev server đọc |
-| `VITE_MUSE_BASE_URL` | Base URL frontend gọi MuseAI (mặc định `/muse`) |
-| `VITE_MUSE_API_KEY` | Nếu bridge bật API key |
+| `VITE_MUSE_BASE_URL` | Base URL frontend gọi MuseAI (mặc định `/muse`; Vercel: URL Funnel `:8443`) |
+| `VITE_MUSE_API_KEY` | API key bridge (bắt buộc khi đi qua Funnel) |
 | `VITE_MUSE_CONCURRENCY` | Số item song song trên bridge (1–5, mặc định 3) |
 
 `GEMINI_API_KEY` không còn dùng. `GOOGLE_SCRIPT_URL` nằm cứng trong `services/googleSheetService.ts`.
